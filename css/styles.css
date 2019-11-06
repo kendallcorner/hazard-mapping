@@ -1,0 +1,65 @@
+#map {
+	height: 100%;
+	width: 70%;
+	overflow: hidden;
+	float: left;
+}
+
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+#sidebar {
+	width: 29%;
+	float: bottom;
+	float: right;
+}
+
+#title {
+	width: 29%;
+	float: top;
+	float: right;
+	margin-bottom: 20px;
+	margin-top: 20px;
+}
+
+.menu {
+	list-style: none;
+}
+
+.sidebarForm {
+	padding-left: 40px;
+}
+
+.form {
+	list-style: none;
+	padding-left: 0px;
+}
+input {
+	width: 100px;
+}
+label {
+	width: 100px;
+	margin-bottom: 0;
+}
+.open > .dropdown-menu {
+	cursor: pointer;
+}
+h1 {
+	font-size: 22px;
+}
+h2 {
+	font-size: 20px;
+}
+.hazMatDropdown {
+	width: 100%;
+	text-align: left;
+}
+.hazMatList .controls {
+	display: inline-block;
+}
+#map-window {
+	width: 500px;
+}

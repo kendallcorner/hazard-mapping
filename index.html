@@ -30,28 +30,124 @@
 
     <script id="site-template" type="text/x-handlebars-template">
         <h2>Site</h2>
-        <ul class="form">
-            <li>
-                <label>Site Name: </label>
-                <input type="text" id="name" value="{{siteName}}"/>
-            </li>
-            <li><input id="search-box" class="controls" type="text" size="30" placeholder="Search Box"></li>
-            <li>Use the search box to search for the site, zoom in, and select the middle of the site</li>
-            <li>
-                <label>Latitude: </label>
-                <input type="text" id="lat" value="{{lat}}"/>
-            </li>
-            <li>
-                <label>Longitude: </label>
-                <input type="text" id="lon" value="{{lon}}"/>
-            </li>
-        </ul>
+        <div class="form">
+                <label>Site Name: 
+                <input type="text" id="name" value="{{siteName}}"/></label>
+            <input id="search-box" class="controls" type="text" size="30" placeholder="Search Box">
+            <ol>
+              <li> Find the site on the map. Use the search box if needed.</li>
+              <li>click the middle of the site</li>
+              <li>hit submit</li>
+            </ol>
+                <label>Latitude: 
+                <input type="text" id="lat" value="{{lat}}"/></label>
+                <label>Longitude: 
+                <input type="text" id="lon" value="{{lon}}"/></label>
+        </div>
         <div class="btn-group" role="group" aria-label="sumbit and cancel">
-            <button id="site-submit-button" class="btn btn-secondary" type="button">submit</button>
-            <button id="site-cancel-button" class="btn btn-secondary" type="button">cancel</button>
+            <button id="site-submit-button" class="btn btn-primary" type="button">submit</button>
+            <button id="site-cancel-button" class="btn btn-primary" type="button">cancel</button>
         </div>
     </script>
+    <script id="site-title-template" type="text/x-handlebars-template">
+            <h1>Site: {{name}} </h1>
+    </script>
+    <script id="site-contents-panel" type="text/x-handlebars-template">
+        <div class="siteScenarios"> 
+          <h2>Site Scenarios</h2>
+          <ul class="form">
+            {{#each scenarioList}}
+              <li class="scenario">  
+                <div class="dropdown">
+                  <button class="btn dropdown-toggle scenarioDropdown" type="button" data-toggle="dropdown">
+                    {{this.name}}
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li id="{{this.scenarioID}}-delete" onClick="deletescenario('{{this.scenarioID}}')">delete</li>
+                    <li id="{{this.scenarioID}}-edit" onClick="editscenario('{{this.scenarioID}}')">edit</li>
+                    <li id="{{this.scenarioID}}-hide" onClick="hidescenario('{{this.scenarioID}}')">
+                        {{#if this.hidden}}
+                          hide
+                        {{else}}
+                          unhide
+                        {{/if}}
+                    </li>
+                    <li id="{{this.scenarioID}}-hideHRs" onClick="hideHazRanges('{{this.scenarioID}}')">
+                        {{#if this.HRshidden}}
+                          hide hazard ranges
+                        {{else}}
+                          unhide hazard ranges
+                        {{/if}}
+                    </li>
+                  </ul>
+                </div>
+              </li>
+            {{/each}}
+          </ul>
+          <button class="btn btn-primary" type="button" id="new-scenario">Add Scenario</button>
+        </div>
+    </script>
+    <script id="scenario-panel" type="text/x-handlebars-template">
+      <h2>Scenario</h2>
+      <div class="form">
+        <div class="scenario-info">
+          <label>Scenario Name*: 
+            <input type="text" id="name" value="{{name}}">
+          </label>
 
+          <label>Material: 
+            <input type="text" id="material" value="{{material}}" >
+          </label>
+          <div class="latlong-group">
+            <label>Latitude: 
+              <input type="text" id="lat" value="{{lat}}">
+            </label>
+
+            <label>Longitude: 
+              <input type="text" id="lon" value="{{lon}}">
+            </label>
+          </div>
+        </div>
+
+        <div class="range-inputs">
+          <div class="range group">
+            <label>Consequence 1 Range (m): 
+              <input type="text" id="range-1" value="{{range1}}">
+            </label>
+
+            <label>Frequency for Range 1: 
+              <input type="text" id="frange-1" value="{{frange1}}">
+            </label>
+          </div>
+          
+          <div class="range group">
+            <label>Consequence 2 Range (m): 
+              <input type="text" id="range-2" value="{{range2}}">
+            </label>
+
+            <label>Frequency for Range 2: 
+              <input type="text" id="frange-2" value="{{frange2}}">
+            </label>
+          </div>
+          
+          <div class="range group">
+            <label>Consequence 3 Range (m): 
+              <input type="text" id="range-3" value="{{range3}}">
+            </label>
+
+            <label>Frequency for Range 3: 
+              <input type="text" id="frange-3" value="{{frange3}}">
+            </label>
+          </div>
+        </div>
+
+      </div>
+      <div class="btn-group" role="group" aria-label="Basic example">
+        <button id="scenario-submit-button" data-scenario-id="{{scenarioID}}" class="btn btn-primary" type="button">submit</button>
+        <button id="scenario-cancel-button" class="btn btn-primary" type="button">cancel</button>
+      </div>
+    </script>
     <script src="js/secret.js"></script>
     <script defer type="module" src="bundle.js"></script>
   </body>

@@ -32,21 +32,15 @@ window.initMap = function initMap() {
 };
 
 /**
- * Listener to bring up new site panel
+ * Listener to bring up site editor panel
  */
 getElementById("new-site").addEventListener("click", function () {
     //creates a new site and gathers inputs for it.
-    const navigator = getElementById("navigator");
-    navigator.innerHTML = "";
-    const templateInfo = getElementById("site-template").innerHTML;
-    const template = Handlebars.compile(templateInfo);
-    const context = {
+    createHandlebarsView("navigator", "site-template", {
         siteName: "Home",
         lat: 36.15911,
         lon: -95.99374
-    };
-    const templateData = template(context);
-    navigator.innerHTML += templateData;
+    });
     getElementById("name").select();
     google.maps.event.addListener(map, "click", function (event) {
         getElementById("lat").value = event.latLng.lat().toFixed(5);
@@ -54,11 +48,51 @@ getElementById("new-site").addEventListener("click", function () {
     });
 
     EM.emit("site-editor-initialized");
-
-
 });
 
-EM.on("site-editor-cancel", clearDiv);
-function clearDiv (div) {
-    getElementById(div).innerHTML = "";
+/**
+ * Generic Function to creat an Handlebars panel from a template
+ */
+function createHandlebarsView (elementId, templateId, context) {
+    const element = getElementById(elementId);
+    const templateInfo = getElementById(templateId).innerHTML;
+    const template = Handlebars.compile(templateInfo);
+    const templateData = template(context);
+    element.innerHTML = templateData;
 }
+
+/**
+ * Finds location on the map and sets the title to the name of the site
+ */
+EM.on("mapLocation", (location) => {
+    var myLatLng = new google.maps.LatLng(location.latitude, location.longitude);
+    var mapOptions = {
+        center: myLatLng,
+        zoom: 18,
+        mapTypeId: 'satellite'
+    };
+    map = new google.maps.Map(getElementById('map'), mapOptions);
+    map.setTilt(0);
+
+    createHandlebarsView("title", "site-title-template", {
+        name: location.name,
+        lat: location.latitude,
+        lon: location.longitude
+    });
+});
+
+/**
+ * Sets up the Site content Panel
+ */
+EM.on("show-site-content-panel", (location) => {
+    createHandlebarsView("navigator", "site-contents-panel", location);
+    EM.emit("site-content-panel-created");
+});
+
+/**
+ * Sets up the scenario panel
+ */
+EM.on("show-scenario-panel", (scenarioInfo) => {
+    createHandlebarsView("navigator", "scenario-panel", scenarioInfo);
+    EM.emit("scenario-panel-created");
+});

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Hazard Mapping</title>
+    <meta charset="utf-8"></meta>
+    <link href="css/bootstrap.min.css" rel="stylesheet"></link>
+    <link href="css/styles.css" rel="stylesheet"></link>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <div id="side-panel">
+      <div id="title">
+        <h1>Load Site</h1>
+      </div>
+        <div id="controls">
+            <div class="btn-group" role="group" aria-label="New or Load Site">
+                <button class="btn btn-primary" type="button" id="new-site">New Site</button>
+                <input type="file" id="fileElem" style="display:none">
+                <label class="btn btn-primary" for="fileElem">Load Site</label></input>
+            </div>
+        </div>
+        <div id="navigator">
+        </div>
+    </div>
+
+    <script id="site-template" type="text/x-handlebars-template">
+        <h2>Site</h2>
+        <ul class="form">
+            <li>
+                <label>Site Name: </label>
+                <input type="text" id="name" value="{{siteName}}"/>
+            </li>
+            <li><input id="search-box" class="controls" type="text" size="30" placeholder="Search Box"></li>
+            <li>Use the search box to search for the site, zoom in, and select the middle of the site</li>
+            <li>
+                <label>Latitude: </label>
+                <input type="text" id="lat" value="{{lat}}"/>
+            </li>
+            <li>
+                <label>Longitude: </label>
+                <input type="text" id="lon" value="{{lon}}"/>
+            </li>
+        </ul>
+        <div class="btn-group" role="group" aria-label="sumbit and cancel">
+            <button id="site-submit-button" class="btn btn-secondary" type="button">submit</button>
+            <button id="site-cancel-button" class="btn btn-secondary" type="button">cancel</button>
+        </div>
+    </script>
+
+    <script src="js/secret.js"></script>
+    <script defer type="module" src="bundle.js"></script>
+  </body>
+</html>

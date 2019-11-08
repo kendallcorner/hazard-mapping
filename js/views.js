@@ -8,8 +8,8 @@ exports.initMap = initMap;
 /*
  * Sets up event listeners
  */
-function init() {
-    getElementById("new-site").addEventListener("click", openSiteEditor);
+function init(EM) {
+    EM.on("site-editor-open", () => {openSiteEditor(EM);});
 
     EM.on("map-site", mapLocation);
 
@@ -20,7 +20,7 @@ function init() {
     });
 
     // Sets up the scenario panel
-    EM.on("show-scenario-panel", showScenarioPanel);
+    EM.on("show-scenario-panel", (scenarioInfo) => {showScenarioPanel(scenarioInfo, EM);});
 }
 
 /**
@@ -48,7 +48,7 @@ function createHandlebarsView (elementId, templateId, context) {
     element.innerHTML = templateData;
 }
 
-function showScenarioPanel (scenarioInfo) {
+function showScenarioPanel (scenarioInfo, EM) {
     createHandlebarsView("navigator", "scenario-panel", scenarioInfo);
     EM.emit("scenario-panel-created");
 }
@@ -71,7 +71,7 @@ function initMap() {
 /**
  * Bring up site editor panel
  */
-function openSiteEditor() {
+function openSiteEditor(EM) {
     //creates a new site and gathers inputs for it.
     createHandlebarsView("navigator", "site-template", {
         siteName: "Home",
@@ -102,4 +102,4 @@ function mapLocation (location) {
     });
 }
 
-init();
+init(EM);

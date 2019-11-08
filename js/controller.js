@@ -36,6 +36,7 @@ function setUpPlacesSearch(element) {
     // more details for that place.
 
     searchBox.addListener('places_changed', function() {
+        // from: https://developers.google.com/maps/documentation/javascript/places-autocomplete
         var places = searchBox.getPlaces();
         if (places.length == 0) { return; }
 
@@ -48,22 +49,16 @@ function setUpPlacesSearch(element) {
         // For each place, get the icon, name and location.
         var bounds = new window.googleAPI.maps.LatLngBounds();
         places.forEach(function(place) {
-                if (!place.geometry) {
-                    throw new Error("Returned place contains no geometry");
-                }
-
+            if (!place.geometry) {
+                throw new Error("Returned place contains no geometry");
+            }
             // Create a marker for each place.
             const marker = new window.googleAPI.maps.Marker({
                 map: map,
                 title: place.formatted_address,
                 position: place.geometry.location
             });
-
-            window.googleAPI.maps.event.addListener(marker, "click", function (event) {
-                getElementById("lat").value = event.latLng.lat().toFixed(5);
-                getElementById("lon").value = event.latLng.lng().toFixed(5);
-            });
-
+            window.googleAPI.maps.event.addListener(marker, "click", latLongListener);
             markers.push(marker);
 
             if (place.geometry.viewport) {
@@ -79,23 +74,18 @@ function setUpPlacesSearch(element) {
 
 function listenToSiteEditor() {
     setUpPlacesSearch(getElementById('search-box'));
-    window.googleAPI.maps.event.addListener(map, "click", function (event) {
-        getElementById("lat").value = event.latLng.lat().toFixed(5);
-        getElementById("lon").value = event.latLng.lng().toFixed(5);
-    });
+    placeLatLongListenerOnMap();
     getElementById("site-submit-button").addEventListener("click", () => {
         EM.emit("new-site-submitted");
     });
     getElementById("site-cancel-button").addEventListener("click", () => {
         getElementById("navigator").innerHTML = "";
+        removeLatLongListenerFromMap();
     });
 }
 
 function listenToScenarioEditor() {
-    window.googleAPI.maps.event.addListener(map, "click", function (event) {
-        getElementById("lat").value = event.latLng.lat().toFixed(5);
-        getElementById("lon").value = event.latLng.lng().toFixed(5);
-    });
+    placeLatLongListenerOnMap();
     const submitButton = getElementById("scenario-submit-button");
     const scenarioId = submitButton.getAttribute("data-scenario-id");
     getElementById("scenario-submit-button").addEventListener("click", () => {
@@ -103,7 +93,22 @@ function listenToScenarioEditor() {
     });
     getElementById("scenario-cancel-button").addEventListener("click", () => {
         EM.emit("scenario-cancel-button-clicked");
+        removeLatLongListenerFromMap();
     });    
 }
+
+function placeLatLongListenerOnMap() {
+    window.googleAPI.maps.event.addListener(map, "click", latLongListener);
+}
+
+function latLongListener(event) {
+    getElementById("lat").value = event.latLng.lat().toFixed(5);
+    getElementById("lon").value = event.latLng.lng().toFixed(5);
+}
+
+function removeLatLongListenerFromMap() {
+    window.googleAPI.maps.event.addListener(latLongListener);
+}
+
 
 init();

@@ -2,27 +2,27 @@
 const { EM } = require("./controller");
 const { getElementById } = require("./views");
 
-const myLocation = {};
+const site = {};
 let scenarioCount = 0;
 
 /**
  * Creat new site
  */
 EM.on("new-site-submitted", () => {
-    myLocation.name =  getElementById('name').value;
-    myLocation.latitude =  Number(getElementById('lat').value).toFixed(5);
-    myLocation.longitude =  Number(getElementById('lon').value).toFixed(5);
-    myLocation.scenarioList =  {};
-    console.log(myLocation);
-    EM.emit("mapLocation", myLocation);
-    EM.emit("show-site-content-panel", myLocation);
+    site.name =  getElementById('name').value;
+    site.latitude =  Number(getElementById('lat').value).toFixed(5);
+    site.longitude =  Number(getElementById('lon').value).toFixed(5);
+    site.scenarioList =  {};
+    console.log(site);
+    EM.emit("map-site", site);
+    EM.emit("show-site-content-panel", site);
 });
 
 /**
  * Send location info to site content panel
  */
 EM.on("scenario-cancel-button-clicked", () => {
-    EM.emit("show-site-content-panel", myLocation);
+    EM.emit("show-site-content-panel", site);
 });
 
 /**
@@ -37,11 +37,11 @@ EM.on("create-edit-scenario", (scenarioId) => {
     }
 
     var name = getElementById('name').value;
-    if (scenarioId in myLocation.scenarioList) {
+    if (scenarioId in site.scenarioList) {
         //showHideMapFeatures(scenarioId, null);
         //delete myMapFeatures[scenarioId]; 
     }
-    myLocation.scenarioList[scenarioId] = {
+    site.scenarioList[scenarioId] = {
         name: getElementById('name').value,
         scenarioId: scenarioId,
         material: getElementById('material').value,
@@ -54,6 +54,6 @@ EM.on("create-edit-scenario", (scenarioId) => {
         range3: getElementById('material').value,
         frequencyRange3: getElementById('material').value
     }; 
-    //createMapFeatures(myLocation.hazMatList[hazMatID], hazMatID);
-    EM.emit("show-site-content-panel", myLocation);
+    //createMapFeatures(site.hazMatList[hazMatID], hazMatID);
+    EM.emit("show-site-content-panel", site);
 });

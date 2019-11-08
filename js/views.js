@@ -3,6 +3,7 @@ const Handlebars = require("handlebars");
 const { EM } = require("./controller");
 const model = require("./model");
 exports.getElementById = getElementById;
+exports.initMap = initMap;
 
 /**
  * Find an element on the page or throw a helpful error.
@@ -20,7 +21,7 @@ function getElementById(id) {
 /**
  * Initialized the google maps map in the approriate div
  */
-window.initMap = function initMap() {
+function initMap() {
     //Initialize map to arbitrary location.
     const myLatLng = new google.maps.LatLng(36.15911, -95.99374);
     //Home: 36.15911, -95.99374

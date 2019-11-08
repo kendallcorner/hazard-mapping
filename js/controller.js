@@ -90,3 +90,5 @@ EM.on("scenario-panel-created", () => {
         EM.emit("scenario-cancel-button-clicked");
     });    
 });
+
+//getElementById("new-site").addEventListener("click", EM.emit("site-editor-open"));

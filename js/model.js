@@ -11,12 +11,16 @@ function setupModel(EM) {
      */
     EM.on("new-site-submitted", () => {
         site.name =  getElementById('name').value;
-        site.latitude =  Number(getElementById('lat').value).toFixed(5);
-        site.longitude =  Number(getElementById('lon').value).toFixed(5);
+        site.latitude =  Number(getElementById('latitude').value).toFixed(5);
+        site.longitude =  Number(getElementById('longitude').value).toFixed(5);
         site.scenarioList =  {};
         console.log(site);
         EM.emit("map-site", site);
         EM.emit("show-site-content-panel", site);
+    });
+
+    EM.on("edit-site", () => {
+        EM.emit("site-editor-open", site);
     });
 
     /**
@@ -40,8 +44,8 @@ function setupModel(EM) {
             name: getElementById('name').value,
             scenarioId: scenarioId,
             material: getElementById('material').value,
-            lat: Number(getElementById('lat').value),
-            lon: Number(getElementById('lon').value),
+            latitude: Number(getElementById('latitude').value),
+            longitude: Number(getElementById('longitude').value),
             range1: getElementById('range-1').value,
             frequencyRange1: getElementById('material').value,
             range2: getElementById('material').value,

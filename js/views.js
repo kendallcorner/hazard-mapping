@@ -9,13 +9,14 @@ exports.initMap = initMap;
  * Sets up event listeners
  */
 function init(EM) {
-    EM.on("site-editor-open", () => {openSiteEditor(EM);});
+    EM.on("site-editor-open", (site) => {openSiteEditor(site,EM);});
 
     EM.on("map-site", mapLocation);
 
     // Sets up the Site content Panel
     EM.on("show-site-content-panel", (location) => {
-        createHandlebarsView("navigator", "site-contents-panel", location);
+        createHandlebarsViewFromTemplateId("navigator", "site-contents-panel", location);
+        createHandlebarsViewFromTemplateId("edit-save-btn-group", "site-template-buttons", {});
         EM.emit("site-content-panel-created");
     });
 
@@ -40,16 +41,21 @@ function getElementById(id) {
 /**
  * Generic Function to creat a Handlebars panel from a template script id
  */
-function createHandlebarsView (elementId, templateId, context) {
-    const element = getElementById(elementId);
+
+function createHandlebarsViewFromTemplateId (elementId, templateId, context) {
     const templateInfo = getElementById(templateId).innerHTML;
+    createHandlebarsViewFromTemplate(elementId,templateInfo, context);
+}
+
+function createHandlebarsViewFromTemplate (elementId, templateInfo, context) {
+    const element = getElementById(elementId);
     const template = Handlebars.compile(templateInfo);
     const templateData = template(context);
     element.innerHTML = templateData;
 }
 
 function showScenarioPanel (scenarioInfo, EM) {
-    createHandlebarsView("navigator", "scenario-panel", scenarioInfo);
+    createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenarioInfo);
     EM.emit("scenario-panel-created");
 }
 
@@ -71,13 +77,17 @@ function initMap() {
 /**
  * Bring up site editor panel
  */
-function openSiteEditor(EM) {
+function openSiteEditor(site, EM) {
+    if (!site) {
+        site = {
+            name: "Home",
+            latitude: 36.15911,
+            longitude: -95.99374
+        };
+    }
     //creates a new site and gathers inputs for it.
-    createHandlebarsView("navigator", "site-template", {
-        siteName: "Home",
-        lat: 36.15911,
-        lon: -95.99374
-    });
+    createHandlebarsViewFromTemplateId("navigator", "site-template", site);
+    controls = getElementById("controls");
     getElementById("name").select();
     EM.emit("site-editor-initialized");
 }
@@ -95,10 +105,10 @@ function mapLocation (location) {
     map = new window.googleAPI.maps.Map(getElementById('map'), mapOptions);
     map.setTilt(0);
 
-    createHandlebarsView("title", "site-title-template", {
+    createHandlebarsViewFromTemplate("title", "<h1>Site: {{name}} </h1>", {
         name: location.name,
-        lat: location.latitude,
-        lon: location.longitude
+        latitude: location.latitude,
+        longitude: location.longitude
     });
 }
 

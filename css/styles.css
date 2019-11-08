@@ -63,6 +63,12 @@ h2 {
 	display: inline-block;
 }
 
+.btn-primary {
+	width: 110px;
+	margin-top: 1px;
+	margin-bottom: 1px;
+}
+
 @media (max-width: 900px) { 
 	#map {
 		height: 500px;

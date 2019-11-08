@@ -9,9 +9,21 @@ const { getElementById } = require("./views");
  * Sets up event listeners
  */
 function init() {
+    getElementById("new-site").addEventListener("click", () => {EM.emit("site-editor-open", {});});
+
+    // TODO:
+    getElementById("load-site").addEventListener("click", () => {EM.emit("");});
+
     // listeners for site-content-panel
     EM.on("site-content-panel-created", () => {
         getElementById("new-scenario").addEventListener("click", () => {
+            EM.emit("show-scenario-panel", {});
+        });
+        getElementById("edit-site").addEventListener("click", () => {
+            EM.emit("edit-site");
+        });
+        // TODO:
+        getElementById("save-site").addEventListener("click", () => {
             EM.emit("show-scenario-panel", {});
         });
     });
@@ -22,7 +34,7 @@ function init() {
     // Add scenario panel event listeners
     EM.on("scenario-panel-created", listenToScenarioEditor);
 
-    getElementById("new-site").addEventListener("click", () => {EM.emit("site-editor-open");});
+
 }
 
 /*
@@ -72,6 +84,9 @@ function setUpPlacesSearch(element) {
     });
 }
 
+/*
+ * Set up places search bar to look up addresses and location names nearby
+ */
 function listenToSiteEditor() {
     setUpPlacesSearch(getElementById('search-box'));
     placeLatLongListenerOnMap();
@@ -84,6 +99,9 @@ function listenToSiteEditor() {
     });
 }
 
+/*
+ * Set up places search bar to look up addresses and location names nearby
+ */
 function listenToScenarioEditor() {
     placeLatLongListenerOnMap();
     const submitButton = getElementById("scenario-submit-button");
@@ -102,8 +120,8 @@ function placeLatLongListenerOnMap() {
 }
 
 function latLongListener(event) {
-    getElementById("lat").value = event.latLng.lat().toFixed(5);
-    getElementById("lon").value = event.latLng.lng().toFixed(5);
+    getElementById("latitude").value = event.latLng.lat().toFixed(5);
+    getElementById("longitude").value = event.latLng.lng().toFixed(5);
 }
 
 function removeLatLongListenerFromMap() {

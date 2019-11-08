@@ -18,10 +18,12 @@
         <h1>Load Site</h1>
       </div>
         <div id="controls">
-            <div class="btn-group" role="group" aria-label="New or Load Site">
+            <div id="new-load-btn-group" class="btn-group" role="group" aria-label="New or Load Site">
                 <button class="btn btn-primary" type="button" id="new-site">New Site</button>
-                <input type="file" id="fileElem" style="display:none">
-                <label class="btn btn-primary" for="fileElem">Load Site</label></input>
+                <input type="file" id="load-site" style="display:none">
+                <label class="btn btn-primary" for="load-site">Load Site</label></input>
+            </div>
+            <div id="edit-save-btn-group" class="btn-group" role="group" aria-label="Edit or Save Site">
             </div>
         </div>
         <div id="navigator">
@@ -32,7 +34,7 @@
         <h2>Site</h2>
         <div class="form">
                 <label>Site Name: 
-                <input type="text" id="name" value="{{siteName}}"/></label>
+                <input type="text" id="name" value="{{name}}"/></label>
             <input id="search-box" class="controls" type="text" size="30" placeholder="Search Box">
             <ol>
               <li> Find the site on the map. Use the search box if needed.</li>
@@ -40,17 +42,18 @@
               <li>hit submit</li>
             </ol>
                 <label>Latitude: 
-                <input type="text" id="lat" value="{{lat}}"/></label>
+                <input type="text" id="latitude" value="{{latitude}}"/></label>
                 <label>Longitude: 
-                <input type="text" id="lon" value="{{lon}}"/></label>
+                <input type="text" id="longitude" value="{{longitude}}"/></label>
         </div>
         <div class="btn-group" role="group" aria-label="sumbit and cancel">
             <button id="site-submit-button" class="btn btn-primary" type="button">submit</button>
             <button id="site-cancel-button" class="btn btn-primary" type="button">cancel</button>
         </div>
     </script>
-    <script id="site-title-template" type="text/x-handlebars-template">
-            <h1>Site: {{name}} </h1>
+    <script id="site-template-buttons" type="text/x-handlebars-template">
+      <button class='btn btn-primary' type='button' id='edit-site'>Edit Site</button>
+      <button class='btn btn-primary' type='button' id='save-site'>Save Site</button>
     </script>
     <script id="site-contents-panel" type="text/x-handlebars-template">
         <div class="siteScenarios"> 
@@ -101,11 +104,11 @@
           </label>
           <div class="latlong-group">
             <label>Latitude*: 
-              <input type="text" id="lat" value="{{lat}}">
+              <input type="text" id="latitude" value="{{lat}}">
             </label>
 
             <label>Longitude*: 
-              <input type="text" id="lon" value="{{lon}}">
+              <input type="text" id="longitude" value="{{lon}}">
             </label>
           </div>
         </div>

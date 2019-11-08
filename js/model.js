@@ -6,7 +6,7 @@ const site = {};
 let scenarioCount = 0;
 
 /**
- * Creat new site
+ * Create new site
  */
 EM.on("new-site-submitted", () => {
     site.name =  getElementById('name').value;

@@ -6,13 +6,30 @@ const { getElementById } = require("./views");
 
 
 /*
- * Add event listeners to site editor panel and set up places
- * search bar to look up addresses and location names nearby
+ * Sets up event listeners
  */
-EM.on("site-editor-initialized", () => {
-    const input = getElementById('search-box');
-    const searchBox = new google.maps.places.SearchBox(input);
-    // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+function init() {
+    // listeners for site-content-panel
+    EM.on("site-content-panel-created", () => {
+        getElementById("new-scenario").addEventListener("click", () => {
+            EM.emit("show-scenario-panel", {});
+        });
+    });
+
+    // listeners for site editor panel
+    EM.on("site-editor-initialized", listenToSiteEditor);
+
+    // Add scenario panel event listeners
+    EM.on("scenario-panel-created", listenToScenarioEditor);
+
+    getElementById("new-site").addEventListener("click", () => {EM.emit("site-editor-open");});
+}
+
+/*
+ * Set up places search bar to look up addresses and location names nearby
+ */
+function setUpPlacesSearch(element) {
+    const searchBox = new window.googleAPI.maps.places.SearchBox(element);
     
     let markers = [];
     // Listen for the event fired when the user selects a prediction and retrieve
@@ -29,20 +46,20 @@ EM.on("site-editor-initialized", () => {
         markers = [];
 
         // For each place, get the icon, name and location.
-        var bounds = new google.maps.LatLngBounds();
+        var bounds = new window.googleAPI.maps.LatLngBounds();
         places.forEach(function(place) {
                 if (!place.geometry) {
                     throw new Error("Returned place contains no geometry");
                 }
 
             // Create a marker for each place.
-            const marker = new google.maps.Marker({
+            const marker = new window.googleAPI.maps.Marker({
                 map: map,
                 title: place.formatted_address,
                 position: place.geometry.location
             });
 
-            google.maps.event.addListener(marker, "click", function (event) {
+            window.googleAPI.maps.event.addListener(marker, "click", function (event) {
                 getElementById("lat").value = event.latLng.lat().toFixed(5);
                 getElementById("lon").value = event.latLng.lng().toFixed(5);
             });
@@ -58,29 +75,27 @@ EM.on("site-editor-initialized", () => {
         });
         map.fitBounds(bounds);
     });
+}
 
-    getElementById("site-submit-button").addEventListener("click", function () {
+function listenToSiteEditor() {
+    setUpPlacesSearch(getElementById('search-box'));
+    window.googleAPI.maps.event.addListener(map, "click", function (event) {
+        getElementById("lat").value = event.latLng.lat().toFixed(5);
+        getElementById("lon").value = event.latLng.lng().toFixed(5);
+    });
+    getElementById("site-submit-button").addEventListener("click", () => {
         EM.emit("new-site-submitted");
     });
-
     getElementById("site-cancel-button").addEventListener("click", () => {
         getElementById("navigator").innerHTML = "";
     });
-});
+}
 
-/**
- * add event listeners to the site content panel
- */
-EM.on("site-content-panel-created", () => {
-    getElementById("new-scenario").addEventListener("click", () => {
-        EM.emit("show-scenario-panel", {});
+function listenToScenarioEditor() {
+    window.googleAPI.maps.event.addListener(map, "click", function (event) {
+        getElementById("lat").value = event.latLng.lat().toFixed(5);
+        getElementById("lon").value = event.latLng.lng().toFixed(5);
     });
-});
-
-/**
- * Add event listeners to scenario panel
- */
-EM.on("scenario-panel-created", () => {
     const submitButton = getElementById("scenario-submit-button");
     const scenarioId = submitButton.getAttribute("data-scenario-id");
     getElementById("scenario-submit-button").addEventListener("click", () => {
@@ -89,6 +104,6 @@ EM.on("scenario-panel-created", () => {
     getElementById("scenario-cancel-button").addEventListener("click", () => {
         EM.emit("scenario-cancel-button-clicked");
     });    
-});
+}
 
-//getElementById("new-site").addEventListener("click", EM.emit("site-editor-open"));
+init();

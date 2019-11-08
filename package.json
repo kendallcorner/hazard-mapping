@@ -14,7 +14,7 @@
     "watchify": "^3.11.1"
   },
   "scripts": {
-    "start": "budo js/index.js:bundle.js --live", 
+    "start": "budo js/index.js:bundle.js --live",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

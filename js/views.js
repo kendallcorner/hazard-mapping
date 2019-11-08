@@ -1,14 +1,13 @@
 /*jshint esversion: 7 */
 const Handlebars = require("handlebars");
-const { EM } = require("./controller");
-const model = require("./model");
 exports.getElementById = getElementById;
 exports.initMap = initMap;
+exports.initViews = initViews;
 
 /*
  * Sets up event listeners
  */
-function init(EM) {
+function initViews(EM) {
     EM.on("site-editor-open", (site) => {openSiteEditor(site,EM);});
 
     EM.on("map-site", mapLocation);
@@ -85,7 +84,6 @@ function openSiteEditor(site, EM) {
             longitude: -95.99374
         };
     }
-    //creates a new site and gathers inputs for it.
     createHandlebarsViewFromTemplateId("navigator", "site-template", site);
     controls = getElementById("controls");
     getElementById("name").select();
@@ -111,5 +109,3 @@ function mapLocation (location) {
         longitude: location.longitude
     });
 }
-
-init(EM);

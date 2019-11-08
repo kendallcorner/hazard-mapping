@@ -1,33 +1,38 @@
 /*jshint esversion: 7 */
-const { EM } = require("./controller");
 const { getElementById } = require("./views");
+exports.setupModel = setupModel;
 
-const site = {};
 let scenarioCount = 0;
 
 function setupModel(EM) {
+    const site = {};
+    const state = {
+        site: {},
+        panel: "home"
+    };
+
     /**
      * Create new site
      */
     EM.on("new-site-submitted", () => {
-        site.name =  getElementById('name').value;
-        site.latitude =  Number(getElementById('latitude').value).toFixed(5);
-        site.longitude =  Number(getElementById('longitude').value).toFixed(5);
-        site.scenarioList =  {};
-        console.log(site);
-        EM.emit("map-site", site);
-        EM.emit("show-site-content-panel", site);
+        state.site.name =  getElementById('name').value;
+        state.site.latitude =  Number(getElementById('latitude').value).toFixed(5);
+        state.site.longitude =  Number(getElementById('longitude').value).toFixed(5);
+        state.site.scenarioList =  {};
+        console.log(state.site);
+        EM.emit("map-site", state);
+        EM.emit("show-site-content-panel", state.site);
     });
 
     EM.on("edit-site", () => {
-        EM.emit("site-editor-open", site);
+        EM.emit("site-editor-open", state.site);
     });
 
     /**
      * Send location info to site content panel
      */
     EM.on("scenario-cancel-button-clicked", () => {
-        EM.emit("show-site-content-panel", site);
+        EM.emit("show-site-content-panel", state.site);
     });
 
     /**
@@ -40,7 +45,7 @@ function setupModel(EM) {
         }
 
         var name = getElementById('name').value;
-        site.scenarioList[scenarioId] = {
+        state.site.scenarioList[scenarioId] = {
             name: getElementById('name').value,
             scenarioId: scenarioId,
             material: getElementById('material').value,
@@ -53,10 +58,8 @@ function setupModel(EM) {
             range3: getElementById('material').value,
             frequencyRange3: getElementById('material').value
         }; 
-        //createMapFeatures(site.hazMatList[hazMatID], hazMatID);
-        EM.emit("show-site-content-panel", site);
+
+        EM.emit("show-site-content-panel", state.site);
     });
-
+    return state;
 }
-
-setupModel(EM);

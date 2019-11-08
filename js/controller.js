@@ -1,14 +1,11 @@
 /*jshint esversion: 7 */
-const events = require("events");
-const EM = new events.EventEmitter();
-exports.EM = EM;
 const { getElementById } = require("./views");
-
+exports.initController = initController;
 
 /*
  * Sets up event listeners
  */
-function init() {
+function initController(EM) {
     getElementById("new-site").addEventListener("click", () => {EM.emit("site-editor-open", {});});
 
     // TODO:
@@ -29,11 +26,14 @@ function init() {
     });
 
     // listeners for site editor panel
-    EM.on("site-editor-initialized", listenToSiteEditor);
+    EM.on("site-editor-initialized", () => { 
+        listenToSiteEditor(EM);
+    });
 
     // Add scenario panel event listeners
-    EM.on("scenario-panel-created", listenToScenarioEditor);
-
+    EM.on("scenario-panel-created", () => { 
+        listenToScenarioEditor(EM);
+    });
 
 }
 
@@ -87,7 +87,7 @@ function setUpPlacesSearch(element) {
 /*
  * Set up places search bar to look up addresses and location names nearby
  */
-function listenToSiteEditor() {
+function listenToSiteEditor(EM) {
     setUpPlacesSearch(getElementById('search-box'));
     placeLatLongListenerOnMap();
     getElementById("site-submit-button").addEventListener("click", () => {
@@ -102,7 +102,7 @@ function listenToSiteEditor() {
 /*
  * Set up places search bar to look up addresses and location names nearby
  */
-function listenToScenarioEditor() {
+function listenToScenarioEditor(EM) {
     placeLatLongListenerOnMap();
     const submitButton = getElementById("scenario-submit-button");
     const scenarioId = submitButton.getAttribute("data-scenario-id");
@@ -127,6 +127,3 @@ function latLongListener(event) {
 function removeLatLongListenerFromMap() {
     window.googleAPI.maps.event.addListener(latLongListener);
 }
-
-
-init();

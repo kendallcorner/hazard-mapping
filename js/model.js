@@ -20,7 +20,7 @@ function setupModel(EM) {
         state.site.longitude =  Number(getElementById('longitude').value).toFixed(5);
         state.site.scenarioList =  {};
         console.log(state.site);
-        EM.emit("map-site", state);
+        EM.emit("map-site", state.site);
         EM.emit("show-site-content-panel", state.site);
     });
 

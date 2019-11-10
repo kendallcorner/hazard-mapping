@@ -5,9 +5,7 @@ exports.setupModel = setupModel;
 let scenarioCount = 0;
 
 function setupModel(EM) {
-    const site = {};
     const state = {
-        site: {},
         panel: "home"
     };
 
@@ -15,24 +13,14 @@ function setupModel(EM) {
      * Create new site
      */
     EM.on("new-site-submitted", () => {
+        state.site = {};
         state.site.name =  getElementById('name').value;
         state.site.latitude =  Number(getElementById('latitude').value).toFixed(5);
         state.site.longitude =  Number(getElementById('longitude').value).toFixed(5);
         state.site.scenarioList =  {};
-        console.log(state.site);
         EM.emit("map-site", state.site);
-        EM.emit("show-site-content-panel", state.site);
-    });
-
-    EM.on("edit-site", () => {
-        EM.emit("site-editor-open", state.site);
-    });
-
-    /**
-     * Send location info to site content panel
-     */
-    EM.on("scenario-cancel-button-clicked", () => {
-        EM.emit("show-site-content-panel", state.site);
+        state.panel = "site-content";
+        EM.emit("change-panel");
     });
 
     /**
@@ -58,8 +46,9 @@ function setupModel(EM) {
             range3: getElementById('material').value,
             frequencyRange3: getElementById('material').value
         }; 
-
-        EM.emit("show-site-content-panel", state.site);
+        window.state.panel = "site-content";
+        window.state.scenarioId = null;
+        EM.emit("change-panel");
     });
     return state;
 }

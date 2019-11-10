@@ -8,19 +8,21 @@ exports.initViews = initViews;
  * Sets up event listeners
  */
 function initViews(EM) {
-    EM.on("site-editor-open", (site) => {openSiteEditor(site,EM);});
-
-    EM.on("map-site", mapLocation);
-
-    // Sets up the Site content Panel
-    EM.on("show-site-content-panel", (location) => {
-        createHandlebarsViewFromTemplateId("navigator", "site-contents-panel", location);
-        createHandlebarsViewFromTemplateId("edit-save-btn-group", "site-template-buttons", {});
-        EM.emit("site-content-panel-created");
+    EM.on("change-panel", () => {
+        const panel = window.state.panel;
+        const site = window.state.site;
+        if (panel === "site-editor") {
+            showSiteEditor(site, EM);
+        } else if (panel === "site-content") {
+            showSiteContentPanel(site, EM);
+        } else if (panel === "scenario-editor") {
+            showScenarioPanel(window.state.scenarioId, EM);
+        } else {
+            console.err("No panel of the name ", panel);
+        }
     });
 
-    // Sets up the scenario panel
-    EM.on("show-scenario-panel", (scenarioInfo) => {showScenarioPanel(scenarioInfo, EM);});
+    EM.on("map-site", mapLocation);
 }
 
 /**
@@ -53,11 +55,6 @@ function createHandlebarsViewFromTemplate (elementId, templateInfo, context) {
     element.innerHTML = templateData;
 }
 
-function showScenarioPanel (scenarioInfo, EM) {
-    createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenarioInfo);
-    EM.emit("scenario-panel-created");
-}
-
 /**
  * Initialized the google maps map in the approriate div
  */
@@ -71,23 +68,6 @@ function initMap() {
         zoom: 18, 
         mapTypeId: 'satellite'});
     map.setTilt(0);
-}
-
-/**
- * Bring up site editor panel
- */
-function openSiteEditor(site, EM) {
-    if (!site) {
-        site = {
-            name: "Home",
-            latitude: 36.15911,
-            longitude: -95.99374
-        };
-    }
-    createHandlebarsViewFromTemplateId("navigator", "site-template", site);
-    controls = getElementById("controls");
-    getElementById("name").select();
-    EM.emit("site-editor-initialized");
 }
 
 /**
@@ -108,4 +88,33 @@ function mapLocation (location) {
         latitude: location.latitude,
         longitude: location.longitude
     });
+}
+
+
+/**
+ * Bring up site editor panel
+ */
+function showSiteEditor(site, EM) {
+    if (!site) {
+        site = {
+            name: "Home",
+            latitude: 36.15911,
+            longitude: -95.99374
+        };
+    }
+    createHandlebarsViewFromTemplateId("navigator", "site-template", site);
+    controls = getElementById("controls");
+    getElementById("name").select();
+    EM.emit("panel-created");
+}
+
+function showSiteContentPanel (site, EM) {
+    createHandlebarsViewFromTemplateId("navigator", "site-contents-panel", site);
+    createHandlebarsViewFromTemplateId("edit-save-btn-group", "site-template-buttons", {});
+    EM.emit("panel-created");
+}
+
+function showScenarioPanel (scenarioInfo, EM) {
+    createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenarioInfo);
+    EM.emit("panel-created");
 }

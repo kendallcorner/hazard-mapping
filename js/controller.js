@@ -6,35 +6,27 @@ exports.initController = initController;
  * Sets up event listeners
  */
 function initController(EM) {
-    getElementById("new-site").addEventListener("click", () => {EM.emit("site-editor-open", {});});
+    //getElementById("new-site").addEventListener("click", () => {EM.emit("site-editor-open", {});});
+    getElementById("new-site").addEventListener("click", () => {
+        window.state.panel = "site-editor";
+        EM.emit("change-panel");
+    });
 
     // TODO:
     getElementById("load-site").addEventListener("click", () => {EM.emit("");});
 
-    // listeners for site-content-panel
-    EM.on("site-content-panel-created", () => {
-        getElementById("new-scenario").addEventListener("click", () => {
-            EM.emit("show-scenario-panel", {});
-        });
-        getElementById("edit-site").addEventListener("click", () => {
-            EM.emit("edit-site");
-        });
-        // TODO:
-        getElementById("save-site").addEventListener("click", () => {
-            EM.emit("show-scenario-panel", {});
-        });
+    EM.on("panel-created", () => {
+        const panel = window.state.panel;
+        if (panel === "site-editor") {
+            listenToSiteEditor(EM);
+        } else if (panel === "site-content") {
+            listenToSiteContentPanel(EM);
+        } else if (panel === "scenario-editor") {
+            listenToScenarioEditor(EM);
+        } else {
+            console.err("No panel of the name", panel);
+        }
     });
-
-    // listeners for site editor panel
-    EM.on("site-editor-initialized", () => { 
-        listenToSiteEditor(EM);
-    });
-
-    // Add scenario panel event listeners
-    EM.on("scenario-panel-created", () => { 
-        listenToScenarioEditor(EM);
-    });
-
 }
 
 /*
@@ -85,7 +77,7 @@ function setUpPlacesSearch(element) {
 }
 
 /*
- * Set up places search bar to look up addresses and location names nearby
+ * Set up Site Editor listeners
  */
 function listenToSiteEditor(EM) {
     setUpPlacesSearch(getElementById('search-box'));
@@ -95,12 +87,13 @@ function listenToSiteEditor(EM) {
     });
     getElementById("site-cancel-button").addEventListener("click", () => {
         getElementById("navigator").innerHTML = "";
+        window.state.panel = null;
         removeLatLongListenerFromMap();
     });
 }
 
 /*
- * Set up places search bar to look up addresses and location names nearby
+ * Set up Scenario Editor listeners
  */
 function listenToScenarioEditor(EM) {
     placeLatLongListenerOnMap();
@@ -110,10 +103,30 @@ function listenToScenarioEditor(EM) {
         EM.emit("create-edit-scenario", scenarioId);
     });
     getElementById("scenario-cancel-button").addEventListener("click", () => {
-        EM.emit("scenario-cancel-button-clicked");
+        window.state.panel = "site-content";
+        EM.emit("change-panel");
         removeLatLongListenerFromMap();
     });    
 }
+
+/*
+ * Set up Site Content panel listeners
+ */
+function listenToSiteContentPanel(EM) {
+    getElementById("new-scenario").addEventListener("click", () => {
+        window.state.panel = "scenario-editor";
+        EM.emit("change-panel");
+    });
+    getElementById("edit-site").addEventListener("click", () => {
+        window.state.panel = "site-editor";
+        EM.emit("change-panel");
+    });
+    // TODO:
+    getElementById("save-site").addEventListener("click", () => {
+        EM.emit("", {});
+    });
+}
+
 
 function placeLatLongListenerOnMap() {
     window.googleAPI.maps.event.addListener(map, "click", latLongListener);

@@ -134,17 +134,38 @@ function listenToSiteContentPanel(EM) {
 
 function placeLatLongListenerOnMap() {
     window.googleAPI.maps.event.addListener(map, "click", latLongListener);
+    window.googleAPI.maps.event.addListener(map, "click", placeDraggableMarkerOnMap);
+
 }
 
 function removeLatLongListenerFromMap() {
-    window.googleAPI.maps.event.addListener(latLongListener);
+    window.googleAPI.maps.event.removeListener(latLongListener);
+    window.googleAPI.maps.event.removeListener(placeDraggableMarkerOnMap);
 }
 
 function latLongListener(event) {
     setLatLongValues(event.latLng.lat(), event.latLng.lng());
 }
 
-function setLatLongValues(lat, long) {
-    getElementById("latitude").value = lat.toFixed(5);
-    getElementById("longitude").value = long.toFixed(5);
+function setLatLongValues(latitude, longitude) {
+    getElementById("latitude").value = latitude.toFixed(5);
+    getElementById("longitude").value = longitude.toFixed(5);
+}
+
+function placeDraggableMarkerOnMap(event){
+    var myLatLng = new window.googleAPI.maps.LatLng(event.latLng.lat(), event.latLng.lng());
+    if (window.state.searchMarker) window.state.searchMarker.setMap(null);
+    let icon;
+    if (window.state.panel === "site-editor") {
+        icon = "http://192.168.11.75:9966/assets/sitePin.png";
+    } else if (window.state.panel == "scenario-editor") {
+        icon = "http://192.168.11.75:9966/assets/scenario.png";
+    }
+    window.state.searchMarker = new window.googleAPI.maps.Marker({
+        map: map,
+        position: myLatLng,
+        icon: icon,
+        draggable: true
+    });
+    google.maps.event.addListener(window.state.searchMarker, 'dragend', latLongListener);
 }

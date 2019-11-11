@@ -88,6 +88,12 @@ function mapLocation (location) {
         latitude: location.latitude,
         longitude: location.longitude
     });
+    const marker = new window.googleAPI.maps.Marker({
+        map: map,
+        title: location.name,
+        position: myLatLng,
+        icon: "http://192.168.11.75:9966/assets/sitePin.png"
+    });
 }
 
 

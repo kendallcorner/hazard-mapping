@@ -8,6 +8,7 @@
 
 #side-panel {
 	width: 33vw;
+	height: 100vh;
 	float: right;
 	display: flex;
 	flex-direction: column;
@@ -69,7 +70,7 @@ h2 {
 	margin-bottom: 1px;
 }
 
-@media (max-width: 900px) { 
+@media (max-width: 900px) {
 	#map {
 		height: 500px;
 		width: 100vw;
@@ -80,4 +81,10 @@ h2 {
 		width: 100vw;
 		display: flex;
 	} 
+}
+
+#footer {
+  position: absolute;
+  bottom: 2px;
+  font-size: 70%;
 }

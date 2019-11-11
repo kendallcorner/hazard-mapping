@@ -60,7 +60,8 @@ function setUpPlacesSearch(element) {
             const marker = new window.googleAPI.maps.Marker({
                 map: map,
                 title: place.formatted_address,
-                position: place.geometry.location
+                position: place.geometry.location,
+                icon: "http://192.168.11.75:9966/assets/searchPin.png"
             });
             window.googleAPI.maps.event.addListener(marker, "click", latLongListener);
             markers.push(marker);
@@ -70,6 +71,9 @@ function setUpPlacesSearch(element) {
                 bounds.union(place.geometry.viewport);
             } else {
                 bounds.extend(place.geometry.location);
+            }
+            if (places.length ==1) {
+                setLatLongValues(place.geometry.location.lat(), place.geometry.location.lng());
             }
         });
         map.fitBounds(bounds);
@@ -132,11 +136,15 @@ function placeLatLongListenerOnMap() {
     window.googleAPI.maps.event.addListener(map, "click", latLongListener);
 }
 
-function latLongListener(event) {
-    getElementById("latitude").value = event.latLng.lat().toFixed(5);
-    getElementById("longitude").value = event.latLng.lng().toFixed(5);
-}
-
 function removeLatLongListenerFromMap() {
     window.googleAPI.maps.event.addListener(latLongListener);
+}
+
+function latLongListener(event) {
+    setLatLongValues(event.latLng.lat(), event.latLng.lng());
+}
+
+function setLatLongValues(lat, long) {
+    getElementById("latitude").value = lat.toFixed(5);
+    getElementById("longitude").value = long.toFixed(5);
 }

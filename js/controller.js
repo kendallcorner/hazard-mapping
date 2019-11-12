@@ -85,32 +85,66 @@ function setUpPlacesSearch(element) {
  */
 function listenToSiteEditor(EM) {
     setUpPlacesSearch(getElementById('search-box'));
-    placeLatLongListenerOnMap();
+    const eventListeners = placeLatLongListenerOnMap();
     getElementById("site-submit-button").addEventListener("click", () => {
         EM.emit("new-site-submitted");
+        removeLatLongListenerFromMap(eventListeners);
+        if (window.state.searchMarker) window.state.searchMarker.setMap(null);
     });
     getElementById("site-cancel-button").addEventListener("click", () => {
         getElementById("navigator").innerHTML = "";
         window.state.panel = null;
-        removeLatLongListenerFromMap();
+        removeLatLongListenerFromMap(eventListeners);
+        if (window.state.searchMarker) window.state.searchMarker.setMap(null);
     });
 }
 
+
+function runDropdownMenu(event, EM) {
+    const dropdownIdSplit = event.target.id.split("-");
+    if (dropdownIdSplit.length === 3) {
+        const [ scenario, scenarioNum, menuFunction ] = dropdownIdSplit;
+        const scenarioId = scenario + "-" + scenarioNum;
+        switch(menuFunction) {
+            case "delete":
+                // code block
+                break;
+            case "edit":
+                window.state.scenarioId = scenarioId;
+                window.state.panel = "scenario-editor";
+                EM.emit("change-panel");
+                break;
+            case "hide":
+                // code block
+                break;
+            case "hideRanges":
+                // code block
+                break;
+            default:
+                throw new Error("dropdown-scneario-menu-item menuFunction is not correct", menuFunction);
+        } 
+    } else {
+        throw new Error("target Id on dropdown-scneario-menu-item is not correct", targetId);
+    }
+}
 /*
  * Set up Scenario Editor listeners
  */
 function listenToScenarioEditor(EM) {
-    placeLatLongListenerOnMap();
+    const eventListeners = placeLatLongListenerOnMap();
     const submitButton = getElementById("scenario-submit-button");
     const scenarioId = submitButton.getAttribute("data-scenario-id");
     getElementById("scenario-submit-button").addEventListener("click", () => {
         EM.emit("create-edit-scenario", scenarioId);
+        removeLatLongListenerFromMap(eventListeners);
+        if (window.state.searchMarker) window.state.searchMarker.setMap(null);
     });
     getElementById("scenario-cancel-button").addEventListener("click", () => {
         window.state.panel = "site-content";
         EM.emit("change-panel");
-        removeLatLongListenerFromMap();
-    });    
+        removeLatLongListenerFromMap(eventListeners);
+        if (window.state.searchMarker) window.state.searchMarker.setMap(null);
+    });
 }
 
 /*
@@ -129,18 +163,29 @@ function listenToSiteContentPanel(EM) {
     getElementById("save-site").addEventListener("click", () => {
         EM.emit("", {});
     });
-}
 
+    const dropdowns = document.getElementsByClassName("dropdown-scenario-menu-item");
+    if (dropdowns) {
+        for (const dropdown of dropdowns) {
+            dropdown.addEventListener("click", event => {
+                runDropdownMenu(event, EM);
+            });
+        }
+    }
+}
 
 function placeLatLongListenerOnMap() {
-    window.googleAPI.maps.event.addListener(map, "click", latLongListener);
-    window.googleAPI.maps.event.addListener(map, "click", placeDraggableMarkerOnMap);
+    return [
+        window.googleAPI.maps.event.addListener(map, "click", latLongListener),
+        window.googleAPI.maps.event.addListener(map, "click", placeDraggableMarkerOnMap)
+    ];
 
 }
 
-function removeLatLongListenerFromMap() {
-    window.googleAPI.maps.event.removeListener(latLongListener);
-    window.googleAPI.maps.event.removeListener(placeDraggableMarkerOnMap);
+function removeLatLongListenerFromMap(eventListeners) {
+    for (const listener of eventListeners) {
+        window.googleAPI.maps.event.removeListener(listener);
+    }
 }
 
 function latLongListener(event) {

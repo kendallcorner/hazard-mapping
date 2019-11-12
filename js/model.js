@@ -6,7 +6,8 @@ let scenarioCount = 0;
 
 function setupModel(EM) {
     const state = {
-        panel: "home"
+        panel: "home",
+        mapFeatures: {}
     };
 
     /**
@@ -18,6 +19,7 @@ function setupModel(EM) {
         state.site.latitude =  Number(getElementById('latitude').value).toFixed(5);
         state.site.longitude =  Number(getElementById('longitude').value).toFixed(5);
         state.site.scenarioList =  {};
+        state.mapFeatures.scenarioMarker = {};
         EM.emit("map-site", state.site);
         state.panel = "site-content";
         EM.emit("change-panel");
@@ -28,8 +30,8 @@ function setupModel(EM) {
      */
     EM.on("create-edit-scenario", (scenarioId) => {
         if (!scenarioId) {
-            scenarioId = "scenario=" + scenarioCount;
-            scenarioCount =+ 1;
+            scenarioId = "scenario-" + scenarioCount;
+            scenarioCount +=  1;
         }
 
         var name = getElementById('name').value;
@@ -40,13 +42,14 @@ function setupModel(EM) {
             latitude: Number(getElementById('latitude').value),
             longitude: Number(getElementById('longitude').value),
             range1: getElementById('range-1').value,
-            frequencyRange1: getElementById('material').value,
+            frequencyRange1: getElementById('frange-1').value,
             range2: getElementById('material').value,
-            frequencyRange2: getElementById('material').value,
+            frequencyRange2: getElementById('frange-2').value,
             range3: getElementById('material').value,
-            frequencyRange3: getElementById('material').value
+            frequencyRange3: getElementById('frange-3').value
         }; 
         window.state.panel = "site-content";
+        EM.emit("map-scenarios", state.scenarioId);
         window.state.scenarioId = null;
         EM.emit("change-panel");
     });

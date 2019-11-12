@@ -71,16 +71,16 @@
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu">
-                    <li id="{{this.scenarioID}}-delete" onClick="deletescenario('{{this.scenarioID}}')">delete</li>
-                    <li id="{{this.scenarioID}}-edit" onClick="editscenario('{{this.scenarioID}}')">edit</li>
-                    <li id="{{this.scenarioID}}-hide" onClick="hidescenario('{{this.scenarioID}}')">
+                    <li class="dropdown-scenario-menu-item" id="{{this.scenarioId}}-delete">delete</li>
+                    <li class="dropdown-scenario-menu-item" id="{{this.scenarioId}}-edit">edit</li>
+                    <li class="dropdown-scenario-menu-item" id="{{this.scenarioId}}-hide">
                         {{#if this.hidden}}
                           hide
                         {{else}}
                           unhide
                         {{/if}}
                     </li>
-                    <li id="{{this.scenarioID}}-hideHRs" onClick="hideHazRanges('{{this.scenarioID}}')">
+                    <li class="dropdown-scenario-menu-item" id="{{this.scenarioId}}-hideRanges">
                         {{#if this.HRshidden}}
                           hide hazard ranges
                         {{else}}
@@ -108,11 +108,11 @@
           </label>
           <div class="latlong-group">
             <label>Latitude*: 
-              <input type="text" id="latitude" value="{{lat}}">
+              <input type="text" id="latitude" value="{{latitude}}">
             </label>
 
             <label>Longitude*: 
-              <input type="text" id="longitude" value="{{lon}}">
+              <input type="text" id="longitude" value="{{longitude}}">
             </label>
           </div>
         </div>
@@ -124,7 +124,7 @@
             </label>
 
             <label>Frequency for Range 1: 
-              <input type="text" id="frange-1" value="{{frange1}}">
+              <input type="text" id="frange-1" value="{{frequencyRange1}}">
             </label>
           </div>
           
@@ -134,7 +134,7 @@
             </label>
 
             <label>Frequency for Range 2: 
-              <input type="text" id="frange-2" value="{{frange2}}">
+              <input type="text" id="frange-2" value="{{frequencyRange2}}">
             </label>
           </div>
           
@@ -144,7 +144,7 @@
             </label>
 
             <label>Frequency for Range 3: 
-              <input type="text" id="frange-3" value="{{frange3}}">
+              <input type="text" id="frange-3" value="{{frequencyRange3}}">
             </label>
           </div>
         </div>

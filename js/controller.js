@@ -176,7 +176,7 @@ function listenToSiteContentPanel(EM) {
     function dropdownListener (event) {
         runDropdownMenu(event, EM);
     }
-    const dropdowns = document.getElementsByClassName("dropdown-scenario-menu-item");
+    const dropdowns = document.getElementsByClassName("dropdown-button");
     if (dropdowns) {
         for (const dropdown of dropdowns) {
             dropdown.addEventListener("click", dropdownListener);

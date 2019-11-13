@@ -23,7 +23,7 @@ function initViews(EM) {
     });
 
     EM.on("map-site", mapLocation);
-    EM.on("map-scenarios", mapScenarios);
+    EM.on("map-scenarios", mapScenarioWithRanges);
 }
 
 /**
@@ -89,35 +89,54 @@ function mapLocation (location) {
     });
 }
 
-function mapScenarios (editScenarioId) {
+function mapScenarioWithRanges (editScenarioId) {
     editScenarioId = editScenarioId || null;
-    const scenarioMarkerList = window.state.mapFeatures.scenarioMarkerList;
-    if (scenarioMarkerList == {}) {
-        const scenarios = Object.entries(window.state.site.scenarioList);
-        for (const [scenarioId, scenario] of scenarios) {
-            mapScenario(scenarioId, scenario);
-        }
-    }
+    const scenarioList = window.state.mapFeatures.scenarioList;
+    // if (scenarioList == {}) {
+    //     const scenarios = Object.entries(window.state.site.scenarioList);
+    //     for (const [scenarioId, scenario] of scenarios) {
+    //         mapScenario(scenarioId, scenario);
+    //     }
+    // }
 
     if (editScenarioId) {
     // update if it's the one updating
-        if(window.state.mapFeatures.scenarioMarkerList[editScenarioId]) 
-            window.state.mapFeatures.scenarioMarkerList[editScenarioId].setMap(null);
+        if(scenarioList[editScenarioId])
+            window.state.mapFeatures.scenarioList[editScenarioId].marker.setMap(null);
         mapScenario(editScenarioId, window.state.site.scenarioList[editScenarioId]);
     }
 
-    function mapScenario (scenarioId, location) {
-        const { name, latitude, longitude } = location;
+    function mapScenario (scenarioId, scenario) {
+        const { name, latitude, longitude, ranges } = scenario;
         const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
-        window.state.mapFeatures.scenarioMarkerList[scenarioId] = new window.googleAPI.maps.Marker({
+        window.state.mapFeatures.scenarioList[scenarioId] = {};
+        window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Marker({
             map: map,
             title: name,
             position: myLatLng,
             icon: "http://192.168.11.75:9966/assets/scenario.png"
         });
+        const colors =  ["#F0F", "#F00", "#00F"];
+        for (let i = 0; i < ranges.length; i++) {
+            drawGoogleMapsCircle(latitude, longitude, ranges[i].range, colors[i]);
+        }
     }
 }
 
+function drawGoogleMapsCircle(latitude, longitude, radius, color) {
+    //creates Google Maps radius for HazMat
+    const myLatLng = new google.maps.LatLng(Number(latitude), Number(longitude));
+    const circle = new google.maps.Circle({
+        map: map,
+        radius: Number(radius),
+        center: myLatLng,
+        fillOpacity: 0,
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+    });
+    return circle;
+}
 
 /**
  * Bring up site editor panel
@@ -143,14 +162,17 @@ function showSiteContentPanel (site, EM) {
 }
 
 function showScenarioPanel (scenarioId, EM) {
+    if(!window.state.mapFeatures.scenarioList) 
+        window.state.mapFeatures.scenarioList = {};
     const site = window.state.site;
     const scenario = !scenarioId ? 
-        { name: "scenario-" + window.state.scenarioCount, latitude: site.latitude, longitude: site.longitude } : 
+        { name: "scenario-" + window.state.scenarioCount, latitude: site.latitude, longitude: site.longitude, ranges:[] } : 
         site.scenarioList[scenarioId];
 
     createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenario);
     // remove from current scenario from map
-    if(window.state.mapFeatures.scenarioMarkerList[scenarioId]) 
-        window.state.mapFeatures.scenarioMarkerList[scenarioId].setMap(null);
+    if(window.state.mapFeatures.scenarioList[scenarioId]) { 
+        window.state.mapFeatures.scenarioList[scenarioId].marker.setMap(null); 
+    }
     EM.emit("panel-created");
 }

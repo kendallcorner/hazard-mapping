@@ -66,27 +66,27 @@
             {{#each scenarioList}}
               <li class="scenario">  
                 <div class="dropdown">
-                  <button class="btn dropdown-toggle scenarioDropdown" type="button" data-toggle="dropdown">
+                  <button class="btn btn-light dropdown-toggle scenarioDropdown" type="button" data-toggle="dropdown">
                     {{this.name}}
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu">
-                    <li class="dropdown-scenario-menu-item" id="{{this.scenarioId}}-delete">delete</li>
-                    <li class="dropdown-scenario-menu-item" id="{{this.scenarioId}}-edit">edit</li>
-                    <li class="dropdown-scenario-menu-item" id="{{this.scenarioId}}-hide">
+                    <li><button class="btn btn-light dropdown-button" id="{{this.scenarioId}}-delete">delete</button></li>
+                    <li><button class="btn btn-dark dropdown-button" id="{{this.scenarioId}}-edit">edit</button></li>
+                    <li><button class="btn btn-light dropdown-button" id="{{this.scenarioId}}-hide">
                         {{#if this.hidden}}
                           hide
                         {{else}}
                           unhide
                         {{/if}}
-                    </li>
-                    <li class="dropdown-scenario-menu-item" id="{{this.scenarioId}}-hideRanges">
+                    </button></li>
+                    <li><button class="btn btn-light dropdown-button" id="{{this.scenarioId}}-hideRanges">
                         {{#if this.HRshidden}}
                           hide hazard ranges
                         {{else}}
                           unhide hazard ranges
                         {{/if}}
-                    </li>
+                    </button></li>
                   </ul>
                 </div>
               </li>

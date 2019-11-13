@@ -49,6 +49,8 @@ label {
 }
 .open > .dropdown-menu {
 	cursor: pointer;
+	margin: 0;
+	padding: 0;
 }
 h1 {
 	font-size: 22px;
@@ -87,4 +89,14 @@ h2 {
   position: absolute;
   bottom: 2px;
   font-size: 70%;
+}
+
+.dropdown-button {
+	width: 100%;
+	text-align: left;
+	background-color: #EBEBEB;
+}
+
+.dropdown-button:hover, .dropdown-button:focus, .dropdown-button:active, .dropdown-button.active {
+	background-color: #FFF;
 }

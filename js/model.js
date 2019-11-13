@@ -7,18 +7,24 @@ function setupModel(EM) {
         panel: "home",
         mapFeatures: {},
         scenarioCount: 0,
+        scenarioId: null
     };
 
     /**
      * Create new site
      */
     EM.on("new-site-submitted", () => {
-        state.site = {};
-        state.site.name =  getElementById('name').value;
-        state.site.latitude =  Number(getElementById('latitude').value).toFixed(5);
-        state.site.longitude =  Number(getElementById('longitude').value).toFixed(5);
-        state.site.scenarioList =  {};
-        state.mapFeatures.scenarioMarkerList = {};
+        try {
+            state.site = makeSite({
+                name:  getElementById('name').value,
+                latitude: Number(getElementById('latitude').value),
+                longitude: Number(getElementById('longitude').value)
+            });
+        } catch(error) {
+            window.alert(error);
+            EM.emit("change-panel");
+            return;
+        }
         EM.emit("map-site", state.site);
         state.panel = "site-content";
         EM.emit("change-panel");
@@ -40,12 +46,20 @@ function setupModel(EM) {
                 material: getElementById('material').value,
                 latitude: Number(getElementById('latitude').value),
                 longitude: Number(getElementById('longitude').value),
-                range1: getElementById('range-1').value,
-                frequencyRange1: getElementById('frange-1').value,
-                range2: getElementById('range-2').value,
-                frequencyRange2: getElementById('frange-2').value,
-                range3: getElementById('range-3').value,
-                frequencyRange3: getElementById('frange-3').value
+                ranges: [
+                    {
+                        range: getElementById('range-1').value,
+                        frequency: getElementById('frange-1').value
+                    },
+                    {
+                        range: getElementById('range-2').value,
+                        frequency: getElementById('frange-2').value
+                    },
+                    {
+                        range: getElementById('range-3').value,
+                        frequency: getElementById('frange-3').value
+                    }
+                ]
             }); 
         } catch (error) {
             window.alert(error);
@@ -59,8 +73,8 @@ function setupModel(EM) {
     });
 
     EM.on("delete-scenario", () => {
-       if(state.mapFeatures.scenarioMarkerList[state.scenarioId]) {
-            state.mapFeatures.scenarioMarkerList[state.scenarioId].setMap(null);
+       if(state.mapFeatures.scenarioList[state.scenarioId]) {
+            state.mapFeatures.scenarioList[state.scenarioId].setMap(null);
             delete state.site.scenarioList[state.scenarioId];
             window.state.panel = "site-content";
             window.state.scenarioId = null;
@@ -72,21 +86,30 @@ function setupModel(EM) {
     return state;
 }
 
-
 function makeScenario (overrides) {
     if (!overrides.name) throw new Error("Name is required");
     if (!overrides.latitude) throw new Error("Latitude is required (click to place on map)");    
     if (!overrides.longitude) throw new Error("Longitude is required (click to place on map)");
-    if (!overrides.scenarioId) throw new Error("ScenarioId is not being assigned: " + overrides.scenarioId);
+    if (!overrides.scenarioId) throw new Error("ScenarioId is not being assigned");
 
     const defaultValues = {
         material: null,
-        range1: null,
-        frequencyRange1: null,
-        range2: null,
-        frequencyRange2: null,
-        range3: null,
-        frequencyRange3: null,
+        ranges: []
     };
+    overrides.latitude = Number(overrides.latitude).toFixed(5);
+    overrides.longitude = Number(overrides.longitude).toFixed(5);
+    return Object.assign(defaultValues, overrides);
+}
+
+function makeSite (overrides) {
+    if (!overrides.name) throw new Error("Name is required");
+    if (!overrides.latitude) throw new Error("Latitude is required (click to place on map)");    
+    if (!overrides.longitude) throw new Error("Longitude is required (click to place on map)");
+
+    const defaultValues = {
+        scenarioList: {}
+    };
+    overrides.latitude = Number(overrides.latitude).toFixed(5);
+    overrides.longitude = Number(overrides.longitude).toFixed(5);
     return Object.assign(defaultValues, overrides);
 }

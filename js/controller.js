@@ -24,7 +24,7 @@ function initController(EM) {
         } else if (panel === "scenario-editor") {
             listenToScenarioEditor(EM);
         } else {
-            console.err("No panel of the name", panel);
+            console.err("No panel of the name ", panel);
         }
     });
 }
@@ -105,6 +105,7 @@ function runDropdownMenu(event, EM) {
     if (dropdownIdSplit.length === 3) {
         const [ scenario, scenarioNum, menuFunction ] = dropdownIdSplit;
         const scenarioId = scenario + "-" + scenarioNum;
+        console.log('rDdM ', scenarioId);
         switch(menuFunction) {
             case "delete":
                 // code block
@@ -133,9 +134,8 @@ function runDropdownMenu(event, EM) {
 function listenToScenarioEditor(EM) {
     const eventListeners = placeLatLongListenerOnMap();
     const submitButton = getElementById("scenario-submit-button");
-    const scenarioId = submitButton.getAttribute("data-scenario-id");
     getElementById("scenario-submit-button").addEventListener("click", () => {
-        EM.emit("create-edit-scenario", scenarioId);
+        EM.emit("create-edit-scenario", window.state.scenarioId);
         removeLatLongListenerFromMap(eventListeners);
         if (window.state.searchMarker) window.state.searchMarker.setMap(null);
     });

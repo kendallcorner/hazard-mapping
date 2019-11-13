@@ -137,7 +137,10 @@ function showSiteContentPanel (site, EM) {
 }
 
 function showScenarioPanel (scenarioId, EM) {
-    const scenario = window.state.site.scenarioList[scenarioId];
+    const site = window.state.site;
+    const scenario = !scenarioId ? 
+        { name: "scenario-" + window.state.scenarioCount, latitude: site.latitude, longitude: site.longitude } : 
+        site.scenarioList[scenarioId];
     createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenario);
     EM.emit("panel-created");
 }

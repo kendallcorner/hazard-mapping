@@ -108,7 +108,8 @@ function runDropdownMenu(event, EM) {
         console.log('rDdM ', scenarioId);
         switch(menuFunction) {
             case "delete":
-                // code block
+                window.state.scenarioId = scenarioId;
+                EM.emit("delete-scenario");
                 break;
             case "edit":
                 window.state.scenarioId = scenarioId;
@@ -132,19 +133,28 @@ function runDropdownMenu(event, EM) {
  * Set up Scenario Editor listeners
  */
 function listenToScenarioEditor(EM) {
+    const state = window.state;
     const eventListeners = placeLatLongListenerOnMap();
     const submitButton = getElementById("scenario-submit-button");
     getElementById("scenario-submit-button").addEventListener("click", () => {
-        EM.emit("create-edit-scenario", window.state.scenarioId);
+        EM.emit("create-edit-scenario", state.scenarioId);
         removeLatLongListenerFromMap(eventListeners);
-        if (window.state.searchMarker) window.state.searchMarker.setMap(null);
+        if (state.searchMarker) state.searchMarker.setMap(null);
     });
     getElementById("scenario-cancel-button").addEventListener("click", () => {
-        window.state.panel = "site-content";
+        state.panel = "site-content";
         EM.emit("change-panel");
         removeLatLongListenerFromMap(eventListeners);
-        if (window.state.searchMarker) window.state.searchMarker.setMap(null);
+        if (state.searchMarker) state.searchMarker.setMap(null);
     });
+
+    // Make initial scenario marker
+    if (state.scenarioId) {
+        placeDraggableMarkerOnMap(state.site.scenarioList[state.scenarioId].latitude, 
+            state.site.scenarioList[state.scenarioId].longitude);
+    } else {
+        placeDraggableMarkerOnMap(state.site.latitude, state.site.longitude);
+    }
 }
 
 /*
@@ -177,7 +187,9 @@ function listenToSiteContentPanel(EM) {
 function placeLatLongListenerOnMap() {
     return [
         window.googleAPI.maps.event.addListener(map, "click", latLongListener),
-        window.googleAPI.maps.event.addListener(map, "click", placeDraggableMarkerOnMap)
+        window.googleAPI.maps.event.addListener(map, "click", (event) => {
+            placeDraggableMarkerOnMap(event.latLng.lat(), event.latLng.lng());
+        })
     ];
 
 }
@@ -197,15 +209,12 @@ function setLatLongValues(latitude, longitude) {
     getElementById("longitude").value = longitude.toFixed(5);
 }
 
-function placeDraggableMarkerOnMap(event){
-    var myLatLng = new window.googleAPI.maps.LatLng(event.latLng.lat(), event.latLng.lng());
+function placeDraggableMarkerOnMap(latitude, longitude){
+    const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
     if (window.state.searchMarker) window.state.searchMarker.setMap(null);
-    let icon;
-    if (window.state.panel === "site-editor") {
-        icon = "http://192.168.11.75:9966/assets/sitePin.png";
-    } else if (window.state.panel == "scenario-editor") {
-        icon = "http://192.168.11.75:9966/assets/scenario.png";
-    }
+    const icon = window.state.panel == "scenario-editor" ?
+        "http://192.168.11.75:9966/assets/scenario.png" :
+        "http://192.168.11.75:9966/assets/sitePin.png";
     window.state.searchMarker = new window.googleAPI.maps.Marker({
         map: map,
         position: myLatLng,

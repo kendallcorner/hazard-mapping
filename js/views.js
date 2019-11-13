@@ -89,23 +89,29 @@ function mapLocation (location) {
     });
 }
 
-function mapScenarios (editScenarioid) {
-    const scenarios = Object.entries(window.state.site.scenarioList);
-    for (const [scenarioId, scenario] of scenarios) {
-        if (window.state.mapFeatures.scenarioMarker[scenarioId]) {
-        // if the scenario marker already exists
-            if (editScenarioid == scenarioId) {
-            // update if it's the one updating
-                window.state.mapFeatures.scenarioMarker[editScenarioid].setMap(null);
-            } else {
-            // or else skip the making of the marker below
-                continue;
-            }
+function mapScenarios (editScenarioId) {
+    editScenarioId = editScenarioId || null;
+    const scenarioMarkerList = window.state.mapFeatures.scenarioMarkerList;
+    if (scenarioMarkerList == {}) {
+        const scenarios = Object.entries(window.state.site.scenarioList);
+        for (const [scenarioId, scenario] of scenarios) {
+            mapScenario(scenarioId, scenario);
         }
-        const myLatLng = new window.googleAPI.maps.LatLng(scenario.latitude, scenario.longitude);
-        window.state.mapFeatures.scenarioMarker[scenarioId] = new window.googleAPI.maps.Marker({
+    }
+
+    if (editScenarioId) {
+    // update if it's the one updating
+        if(window.state.mapFeatures.scenarioMarkerList[editScenarioId]) 
+            window.state.mapFeatures.scenarioMarkerList[editScenarioId].setMap(null);
+        mapScenario(editScenarioId, window.state.site.scenarioList[editScenarioId]);
+    }
+
+    function mapScenario (scenarioId, location) {
+        const { name, latitude, longitude } = location;
+        const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
+        window.state.mapFeatures.scenarioMarkerList[scenarioId] = new window.googleAPI.maps.Marker({
             map: map,
-            title: scenario.name,
+            title: name,
             position: myLatLng,
             icon: "http://192.168.11.75:9966/assets/scenario.png"
         });
@@ -141,6 +147,10 @@ function showScenarioPanel (scenarioId, EM) {
     const scenario = !scenarioId ? 
         { name: "scenario-" + window.state.scenarioCount, latitude: site.latitude, longitude: site.longitude } : 
         site.scenarioList[scenarioId];
+
     createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenario);
+    // remove from current scenario from map
+    if(window.state.mapFeatures.scenarioMarkerList[scenarioId]) 
+        window.state.mapFeatures.scenarioMarkerList[scenarioId].setMap(null);
     EM.emit("panel-created");
 }

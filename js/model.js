@@ -18,7 +18,7 @@ function setupModel(EM) {
         state.site.latitude =  Number(getElementById('latitude').value).toFixed(5);
         state.site.longitude =  Number(getElementById('longitude').value).toFixed(5);
         state.site.scenarioList =  {};
-        state.mapFeatures.scenarioMarker = {};
+        state.mapFeatures.scenarioMarkerList = {};
         EM.emit("map-site", state.site);
         state.panel = "site-content";
         EM.emit("change-panel");
@@ -47,14 +47,15 @@ function setupModel(EM) {
                 range3: getElementById('range-3').value,
                 frequencyRange3: getElementById('frange-3').value
             }); 
-            window.state.panel = "site-content";
-            EM.emit("map-scenarios", state.scenarioId);
-            window.state.scenarioId = null;
-            EM.emit("change-panel");
         } catch (error) {
             window.alert(error);
             EM.emit("change-panel");
+            return;
         }
+        window.state.panel = "site-content";
+        EM.emit("map-scenarios", state.scenarioId);
+        window.state.scenarioId = null;
+        EM.emit("change-panel");
     });
     return state;
 }

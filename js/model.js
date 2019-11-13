@@ -57,6 +57,18 @@ function setupModel(EM) {
         window.state.scenarioId = null;
         EM.emit("change-panel");
     });
+
+    EM.on("delete-scenario", () => {
+       if(state.mapFeatures.scenarioMarkerList[state.scenarioId]) {
+            state.mapFeatures.scenarioMarkerList[state.scenarioId].setMap(null);
+            delete state.site.scenarioList[state.scenarioId];
+            window.state.panel = "site-content";
+            window.state.scenarioId = null;
+            EM.emit("change-panel");
+         } else {
+             throw new Error("No scenarioMarker exists for " + state.scenarioId);
+         }
+    });
     return state;
 }
 

@@ -105,7 +105,6 @@ function runDropdownMenu(event, EM) {
     if (dropdownIdSplit.length === 3) {
         const [ scenario, scenarioNum, menuFunction ] = dropdownIdSplit;
         const scenarioId = scenario + "-" + scenarioNum;
-        console.log('rDdM ', scenarioId);
         switch(menuFunction) {
             case "delete":
                 window.state.scenarioId = scenarioId;
@@ -174,12 +173,13 @@ function listenToSiteContentPanel(EM) {
         EM.emit("", {});
     });
 
+    function dropdownListener (event) {
+        runDropdownMenu(event, EM);
+    }
     const dropdowns = document.getElementsByClassName("dropdown-scenario-menu-item");
     if (dropdowns) {
         for (const dropdown of dropdowns) {
-            dropdown.addEventListener("click", event => {
-                runDropdownMenu(event, EM);
-            });
+            dropdown.addEventListener("click", dropdownListener);
         }
     }
 }

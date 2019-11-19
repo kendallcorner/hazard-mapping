@@ -35,20 +35,20 @@ function initController(EM) {
 function setUpPlacesSearch(element) {
     const searchBox = new window.googleAPI.maps.places.SearchBox(element);
     
-    let markers = [];
+    window.state.placesMarkers = [];
     // Listen for the event fired when the user selects a prediction and retrieve
     // more details for that place.
 
     searchBox.addListener('places_changed', function() {
         // from: https://developers.google.com/maps/documentation/javascript/places-autocomplete
-        var places = searchBox.getPlaces();
+        const places = searchBox.getPlaces();
         if (places.length == 0) { return; }
 
         // Clear out the old markers.
-        markers.forEach(function(marker) {
+        for (const marker of window.state.placesMarkers) {
             marker.setMap(null);
-        });
-        markers = [];
+        }
+        window.state.placesMarkers = [];
 
         // For each place, get the icon, name and location.
         var bounds = new window.googleAPI.maps.LatLngBounds();
@@ -64,7 +64,7 @@ function setUpPlacesSearch(element) {
                 icon: "http://192.168.11.75:9966/assets/searchPin.png"
             });
             window.googleAPI.maps.event.addListener(marker, "click", latLongListener);
-            markers.push(marker);
+            window.state.placesMarkers.push(marker);
 
             if (place.geometry.viewport) {
                 // Only geocodes have viewport.
@@ -90,13 +90,24 @@ function listenToSiteEditor(EM) {
         EM.emit("new-site-submitted");
         removeLatLongListenerFromMap(eventListeners);
         if (window.state.searchMarker) window.state.searchMarker.setMap(null);
+        removeMarkers();
     });
     getElementById("site-cancel-button").addEventListener("click", () => {
         getElementById("navigator").innerHTML = "";
         window.state.panel = null;
         removeLatLongListenerFromMap(eventListeners);
         if (window.state.searchMarker) window.state.searchMarker.setMap(null);
+        removeMarkers();
     });
+
+    function removeMarkers() {
+        if(window.state.placesMarkers) {
+            for (const marker of window.state.placesMarkers) {
+                marker.setMap(null);
+            }
+            window.state.placesMarkers = [];
+        }
+    }
 }
 
 

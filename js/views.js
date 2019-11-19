@@ -13,21 +13,23 @@ function initViews(EM) {
         const site = window.state.site;
         if (panel === "site-editor") {
             showSiteEditor(site, EM);
+            mapSiteMarker(site);
         } else if (panel === "site-content") {
             showSiteContentPanel(site, EM);
+            mapSiteMarker(site);
+            mapAll(window.state.site.scenarioList);
         } else if (panel === "scenario-editor") {
             showScenarioPanel(window.state.scenarioId, EM);
+            mapSiteMarker(site);
         } else {
             console.err("No panel of the name ", panel);
         }
     });
-
-    EM.on("map-site", mapLocation);
-    EM.on("map-scenarios", mapScenarioWithRanges);
 }
 
-/**
- * Find an element on the page or throw a helpful error.
+
+/*
+ * Utility: Find an element on the page or throw a helpful error.
  */
 function getElementById(id) {
     const input = document.getElementById(id);
@@ -39,16 +41,17 @@ function getElementById(id) {
     return input;
 }
 
-
 /**
- * Generic Function to creat a Handlebars panel from a template script id
+ * Utility: Generic Function to create a Handlebars panel from a template script id
  */
-
 function createHandlebarsViewFromTemplateId (elementId, templateId, context) {
     const templateInfo = getElementById(templateId).innerHTML;
     createHandlebarsViewFromTemplate(elementId,templateInfo, context);
 }
 
+/*
+ * Utility: Generic Function to create a Handlebars panel from a template
+ */
 function createHandlebarsViewFromTemplate (elementId, templateInfo, context) {
     const element = getElementById(elementId);
     const template = Handlebars.compile(templateInfo);
@@ -56,8 +59,8 @@ function createHandlebarsViewFromTemplate (elementId, templateInfo, context) {
     element.innerHTML = templateData;
 }
 
-/**
- * Initialized the google maps map in the approriate div
+/*
+ * Initializes the google maps map in the approriate div
  */
 function initMap() {
     //Initialize map to arbitrary location.
@@ -71,10 +74,39 @@ function initMap() {
     map.setTilt(0);
 }
 
-/**
- * Finds location on the map and sets the title to the name of the site
+/*
+ * Utility: Clears the Google Maps map of all markers and other features
  */
-function mapLocation (location) {
+function clearMap() {
+    const mapFeatures = window.state.mapFeatures;
+    if(mapFeatures.siteMarker) { 
+        mapFeatures.siteMarker.setMap(null); 
+    }
+    if(mapFeatures.scenarioList) { 
+        for (const scenario of Object.values(mapFeatures.scenarioList)) {
+            for (const mapFeature of Object.values(scenario)) {
+                mapFeature.setMap(null);
+            }
+        }
+    }
+    window.state.mapFeatures = {};
+}
+
+/*
+ * Utility: Sets the map back to the set middle location
+ */
+function returnHome(location) {
+    const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
+    map.panTo(myLatLng);
+    map.setTilt(0);
+    map.setZoom(location.zoom);
+}
+
+/*
+ * Clears map and maps the site marker
+ */
+function mapSiteMarker (location) {
+    clearMap();
     const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
     map.panTo(myLatLng);
     map.setTilt(0);
@@ -89,21 +121,18 @@ function mapLocation (location) {
     });
 }
 
-function mapScenarioWithRanges (editScenarioId) {
-    editScenarioId = editScenarioId || null;
-    const scenarioList = window.state.mapFeatures.scenarioList;
-    // if (scenarioList == {}) {
-    //     const scenarios = Object.entries(window.state.site.scenarioList);
-    //     for (const [scenarioId, scenario] of scenarios) {
-    //         mapScenario(scenarioId, scenario);
-    //     }
-    // }
+/*
+ * Maps all scenario markers and hazard range circles
+ */
+function mapAll (scenarioList) {
+    if (!window.state.mapFeatures) window.state.mapFeatures = {};
+    if (!window.state.mapFeatures.scenarioList) window.state.mapFeatures.scenarioList = {};
 
-    if (editScenarioId) {
-    // update if it's the one updating
-        if(scenarioList[editScenarioId])
-            window.state.mapFeatures.scenarioList[editScenarioId].marker.setMap(null);
-        mapScenario(editScenarioId, window.state.site.scenarioList[editScenarioId]);
+    if (scenarioList && scenarioList != {}) {
+        const scenarios = Object.entries(scenarioList);
+        for (const [scenarioId, scenario] of scenarios) {
+            mapScenario(scenarioId, scenario);
+        }
     }
 
     function mapScenario (scenarioId, scenario) {
@@ -118,49 +147,48 @@ function mapScenarioWithRanges (editScenarioId) {
         });
         const colors =  ["#F0F", "#F00", "#00F"];
         for (let i = 0; i < ranges.length; i++) {
-            drawGoogleMapsCircle(latitude, longitude, ranges[i].range, colors[i]);
+            window.state.mapFeatures.scenarioList[scenarioId]['range-'+i] = drawGoogleMapsCircle(latitude, longitude, ranges[i].range, colors[i]);
         }
+    }
+    function drawGoogleMapsCircle(latitude, longitude, radius, color) {
+        //creates Google Maps radius for HazMat
+        const myLatLng = new google.maps.LatLng(Number(latitude), Number(longitude));
+        const circle = new google.maps.Circle({
+            map: map,
+            radius: Number(radius),
+            center: myLatLng,
+            fillOpacity: 0,
+            strokeColor: color,
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+        });
+        return circle;
     }
 }
 
-function drawGoogleMapsCircle(latitude, longitude, radius, color) {
-    //creates Google Maps radius for HazMat
-    const myLatLng = new google.maps.LatLng(Number(latitude), Number(longitude));
-    const circle = new google.maps.Circle({
-        map: map,
-        radius: Number(radius),
-        center: myLatLng,
-        fillOpacity: 0,
-        strokeColor: color,
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-    });
-    return circle;
-}
-
-/**
+/*
  * Bring up site editor panel
  */
 function showSiteEditor(site, EM) {
-    if (!site) {
-        site = {
-            name: "Home",
-            latitude: 36.15911,
-            longitude: -95.99374
-        };
-    }
+    returnHome(site);
     createHandlebarsViewFromTemplateId("navigator", "site-template", site);
-    controls = getElementById("controls");
+
     getElementById("name").select();
     EM.emit("panel-created");
 }
 
+/*
+ * Bring up site content panel
+ */
 function showSiteContentPanel (site, EM) {
     createHandlebarsViewFromTemplateId("navigator", "site-contents-panel", site);
     createHandlebarsViewFromTemplateId("edit-save-btn-group", "site-template-buttons", {});
     EM.emit("panel-created");
 }
 
+/*
+ * Bring up scenario editor panel
+ */
 function showScenarioPanel (scenarioId, EM) {
     if(!window.state.mapFeatures.scenarioList) 
         window.state.mapFeatures.scenarioList = {};
@@ -176,3 +204,4 @@ function showScenarioPanel (scenarioId, EM) {
     }
     EM.emit("panel-created");
 }
+

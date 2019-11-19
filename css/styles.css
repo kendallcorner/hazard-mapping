@@ -88,6 +88,7 @@ h2 {
 #footer {
   position: absolute;
   bottom: 2px;
+  right: 1px;
   font-size: 70%;
 }
 

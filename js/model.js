@@ -7,7 +7,13 @@ function setupModel(EM) {
         panel: "home",
         mapFeatures: {},
         scenarioCount: 0,
-        scenarioId: null
+        scenarioId: null,
+        site: {
+            name: "Home",
+            latitude: 36.15911,
+            longitude: -95.99374,
+            zoom: 18
+        },
     };
 
     /**
@@ -18,14 +24,14 @@ function setupModel(EM) {
             state.site = makeSite({
                 name:  getElementById('name').value,
                 latitude: Number(getElementById('latitude').value),
-                longitude: Number(getElementById('longitude').value)
+                longitude: Number(getElementById('longitude').value),
+                zoom: 18
             });
         } catch(error) {
             window.alert(error);
             EM.emit("change-panel");
             return;
         }
-        EM.emit("map-site", state.site);
         state.panel = "site-content";
         EM.emit("change-panel");
     });
@@ -40,7 +46,7 @@ function setupModel(EM) {
         }
         state.scenarioId = scenarioId;
         try {
-            state.site.scenarioList[scenarioId] = makeScenario({
+            state.site.scenarioList[scenarioId] = new Scenario({
                 name: getElementById('name').value,
                 scenarioId: scenarioId,
                 material: getElementById('material').value,
@@ -67,18 +73,19 @@ function setupModel(EM) {
             return;
         }
         window.state.panel = "site-content";
-        EM.emit("map-scenarios", state.scenarioId);
         window.state.scenarioId = null;
         EM.emit("change-panel");
     });
 
     EM.on("delete-scenario", () => {
-       if(state.mapFeatures.scenarioList[state.scenarioId]) {
-            state.mapFeatures.scenarioList[state.scenarioId].setMap(null);
-            delete state.site.scenarioList[state.scenarioId];
-            window.state.panel = "site-content";
-            window.state.scenarioId = null;
-            EM.emit("change-panel");
+        if(state.mapFeatures.scenarioList[state.scenarioId]) {
+        for (const featureKey in state.mapFeatures.scenarioList[state.scenarioId]) {
+            state.mapFeatures.scenarioList[state.scenarioId][featureKey].setMap(null);
+        }
+           delete state.site.scenarioList[state.scenarioId];
+           window.state.panel = "site-content";
+           window.state.scenarioId = null;
+           EM.emit("change-panel");
          } else {
              throw new Error("No scenarioMarker exists for " + state.scenarioId);
          }
@@ -86,20 +93,26 @@ function setupModel(EM) {
     return state;
 }
 
-function makeScenario (overrides) {
-    if (!overrides.name) throw new Error("Name is required");
-    if (!overrides.latitude) throw new Error("Latitude is required (click to place on map)");    
-    if (!overrides.longitude) throw new Error("Longitude is required (click to place on map)");
-    if (!overrides.scenarioId) throw new Error("ScenarioId is not being assigned");
+function Scenario (scenarioInputs) {
+    if (!scenarioInputs.name) throw new Error("Name is required");
+    if (!scenarioInputs.latitude) throw new Error("Latitude is required (click to place on map)");    
+    if (!scenarioInputs.longitude) throw new Error("Longitude is required (click to place on map)");
+    if (!scenarioInputs.scenarioId) throw new Error("ScenarioId is not being assigned");
 
     const defaultValues = {
         material: null,
         ranges: []
     };
-    overrides.latitude = Number(overrides.latitude).toFixed(5);
-    overrides.longitude = Number(overrides.longitude).toFixed(5);
-    return Object.assign(defaultValues, overrides);
+    scenarioInputs.latitude = Number(scenarioInputs.latitude).toFixed(5);
+    scenarioInputs.longitude = Number(scenarioInputs.longitude).toFixed(5);
+    return Object.assign(this, defaultValues, scenarioInputs);
 }
+
+Scenario.prototype = {
+     constructor: Scenario,
+     update: function (newScenarioInput) { return Object.assign(this, newScenarioInput); }
+};
+
 
 function makeSite (overrides) {
     if (!overrides.name) throw new Error("Name is required");

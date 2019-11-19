@@ -127,10 +127,12 @@ function runDropdownMenu(event, EM) {
                 EM.emit("change-panel");
                 break;
             case "hide":
-                // code block
+                window.state.site.scenarioList[scenarioId].hidden = !window.state.site.scenarioList[scenarioId].hidden;
+                EM.emit("change-panel");
                 break;
             case "hideRanges":
-                // code block
+                window.state.site.scenarioList[scenarioId].rangesHidden = !window.state.site.scenarioList[scenarioId].rangesHidden;
+                EM.emit("change-panel");
                 break;
             default:
                 throw new Error("dropdown-scneario-menu-item menuFunction is not correct", menuFunction);

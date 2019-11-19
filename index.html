@@ -75,16 +75,16 @@
                     <li><button class="btn btn-dark dropdown-button" id="{{this.scenarioId}}-edit">edit</button></li>
                     <li><button class="btn btn-light dropdown-button" id="{{this.scenarioId}}-hide">
                         {{#if this.hidden}}
-                          hide
-                        {{else}}
                           unhide
+                        {{else}}
+                          hide
                         {{/if}}
                     </button></li>
                     <li><button class="btn btn-light dropdown-button" id="{{this.scenarioId}}-hideRanges">
-                        {{#if this.HRshidden}}
-                          hide hazard ranges
-                        {{else}}
+                        {{#if this.rangesHidden}}
                           unhide hazard ranges
+                        {{else}}
+                          hide hazard ranges
                         {{/if}}
                     </button></li>
                   </ul>
@@ -120,31 +120,31 @@
         <div class="range-inputs">
           <div class="range group">
             <label>Consequence 1 Range (m): 
-              <input type="text" id="range-1" value="{{range1}}">
+              <input type="text" id="range-0" value="{{range0}}">
             </label>
 
             <label>Frequency for Range 1: 
-              <input type="text" id="frange-1" value="{{frequencyRange1}}">
+              <input type="text" id="frange-0" value="{{frequency0}}">
             </label>
           </div>
           
           <div class="range group">
             <label>Consequence 2 Range (m): 
-              <input type="text" id="range-2" value="{{range2}}">
+              <input type="text" id="range-1" value="{{range1}}">
             </label>
 
             <label>Frequency for Range 2: 
-              <input type="text" id="frange-2" value="{{frequencyRange2}}">
+              <input type="text" id="frange-1" value="{{frequency1}}">
             </label>
           </div>
           
           <div class="range group">
             <label>Consequence 3 Range (m): 
-              <input type="text" id="range-3" value="{{range3}}">
+              <input type="text" id="range-2" value="{{range2}}">
             </label>
 
             <label>Frequency for Range 3: 
-              <input type="text" id="frange-3" value="{{frequencyRange3}}">
+              <input type="text" id="frange-2" value="{{frequency2}}">
             </label>
           </div>
         </div>

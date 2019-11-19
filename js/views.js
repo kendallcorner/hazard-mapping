@@ -3,6 +3,7 @@ const Handlebars = require("handlebars");
 exports.getElementById = getElementById;
 exports.initMap = initMap;
 exports.initViews = initViews;
+const NUMRANGES = 3;
 
 /*
  * Sets up event listeners
@@ -131,40 +132,50 @@ function mapAll (scenarioList) {
     if (scenarioList && scenarioList != {}) {
         const scenarios = Object.entries(scenarioList);
         for (const [scenarioId, scenario] of scenarios) {
-            mapScenario(scenarioId, scenario);
+            const { hidden, rangesHidden } = scenario;
+            if (!hidden) {
+                mapScenario(scenarioId, scenario);
+                if(!rangesHidden) { mapHazardRanges(scenarioId, scenario); }
+            }
         }
-    }
-
-    function mapScenario (scenarioId, scenario) {
-        const { name, latitude, longitude, ranges } = scenario;
-        const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
-        window.state.mapFeatures.scenarioList[scenarioId] = {};
-        window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Marker({
-            map: map,
-            title: name,
-            position: myLatLng,
-            icon: "http://192.168.11.75:9966/assets/scenario.png"
-        });
-        const colors =  ["#F0F", "#F00", "#00F"];
-        for (let i = 0; i < ranges.length; i++) {
-            window.state.mapFeatures.scenarioList[scenarioId]['range-'+i] = drawGoogleMapsCircle(latitude, longitude, ranges[i].range, colors[i]);
-        }
-    }
-    function drawGoogleMapsCircle(latitude, longitude, radius, color) {
-        //creates Google Maps radius for HazMat
-        const myLatLng = new google.maps.LatLng(Number(latitude), Number(longitude));
-        const circle = new google.maps.Circle({
-            map: map,
-            radius: Number(radius),
-            center: myLatLng,
-            fillOpacity: 0,
-            strokeColor: color,
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-        });
-        return circle;
     }
 }
+
+function mapScenario (scenarioId, scenario) {
+    const { name, latitude, longitude } = scenario;
+    const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
+    window.state.mapFeatures.scenarioList[scenarioId] = {};
+    window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Marker({
+        map: map,
+        title: name,
+        position: myLatLng,
+        icon: "http://192.168.11.75:9966/assets/scenario.png"
+    });
+}
+
+function mapHazardRanges(scenarioId, scenario) {
+    const { name, latitude, longitude } = scenario;
+    const colors =  ["#F0F", "#F00", "#00F"];
+    for (let i = 0; i < NUMRANGES; i++) {
+        window.state.mapFeatures.scenarioList[scenarioId]['range'+i] = drawGoogleMapsCircle(latitude, longitude, scenario["range" + i], colors[i]);
+    }
+}
+
+function drawGoogleMapsCircle(latitude, longitude, radius, color) {
+    //creates Google Maps radius for HazMat
+    const myLatLng = new google.maps.LatLng(Number(latitude), Number(longitude));
+    const circle = new google.maps.Circle({
+        map: map,
+        radius: Number(radius),
+        center: myLatLng,
+        fillOpacity: 0,
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+    });
+    return circle;
+}
+
 
 /*
  * Bring up site editor panel
@@ -193,15 +204,24 @@ function showScenarioPanel (scenarioId, EM) {
     if(!window.state.mapFeatures.scenarioList) 
         window.state.mapFeatures.scenarioList = {};
     const site = window.state.site;
-    const scenario = !scenarioId ? 
-        { name: "scenario-" + window.state.scenarioCount, latitude: site.latitude, longitude: site.longitude, ranges:[] } : 
-        site.scenarioList[scenarioId];
-
+    const scenario = setNewOrGetScenario(site);
     createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenario);
     // remove from current scenario from map
     if(window.state.mapFeatures.scenarioList[scenarioId]) { 
         window.state.mapFeatures.scenarioList[scenarioId].marker.setMap(null); 
     }
     EM.emit("panel-created");
+
+    function setNewOrGetScenario(site) {
+        if (!scenarioId) {
+            return {
+                name: "scenario-" + window.state.scenarioCount, 
+                latitude: site.latitude, 
+                longitude: site.longitude
+            };
+        } else { 
+            return site.scenarioList[scenarioId];
+        }
+    }
 }
 

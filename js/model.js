@@ -52,20 +52,12 @@ function setupModel(EM) {
                 material: getElementById('material').value,
                 latitude: Number(getElementById('latitude').value),
                 longitude: Number(getElementById('longitude').value),
-                ranges: [
-                    {
-                        range: getElementById('range-1').value,
-                        frequency: getElementById('frange-1').value
-                    },
-                    {
-                        range: getElementById('range-2').value,
-                        frequency: getElementById('frange-2').value
-                    },
-                    {
-                        range: getElementById('range-3').value,
-                        frequency: getElementById('frange-3').value
-                    }
-                ]
+                range0: getElementById('range-0').value,
+                frequency0: getElementById('frange-0').value,
+                range1: getElementById('range-1').value,
+                frequency1: getElementById('frange-1').value,
+                range2: getElementById('range-2').value,
+                frequency2: getElementById('frange-2').value
             }); 
         } catch (error) {
             window.alert(error);
@@ -101,7 +93,8 @@ function Scenario (scenarioInputs) {
 
     const defaultValues = {
         material: null,
-        ranges: []
+        hidden: false,
+        rangesHidden: false
     };
     scenarioInputs.latitude = Number(scenarioInputs.latitude).toFixed(5);
     scenarioInputs.longitude = Number(scenarioInputs.longitude).toFixed(5);

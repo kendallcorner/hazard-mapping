@@ -12,8 +12,17 @@ function initController(EM) {
         EM.emit("change-panel");
     });
 
-    // TODO:
-    getElementById("load-site").addEventListener("click", () => {EM.emit("");});
+    const loadButton = getElementById('load-site');
+    loadButton.addEventListener('change', ()=> {
+        //loads existing JSON file as a location.
+        const fileURL = window.URL.createObjectURL(loadButton.files[0]);
+        console.log(fileURL);
+        $.getJSON(fileURL, function(json) {
+            window.state.site = json;
+            window.state.panel = "site-content";
+            EM.emit("change-panel");
+        });
+    });
 
     EM.on("panel-created", () => {
         const panel = window.state.panel;

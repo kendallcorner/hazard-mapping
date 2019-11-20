@@ -36,19 +36,24 @@
 
     <script id="site-template" type="text/x-handlebars-template">
         <h2>Site</h2>
+
+        <label> Search:
+          <input id="search-box" class="controls" type="text" size="30" placeholder="Search Box">
+        </label>
+        <ol>
+          <li> Find the site on the map. Use the search box if needed.</li>
+          <li>click the middle of the site</li>
+          <li>hit submit</li>
+        </ol>
         <div class="form" id="form">
-                <label>Site Name: 
-                <input type="text" id="name" value="{{name}}"/></label>
-            <input id="search-box" class="controls" type="text" size="30" placeholder="Search Box">
-            <ol>
-              <li> Find the site on the map. Use the search box if needed.</li>
-              <li>click the middle of the site</li>
-              <li>hit submit</li>
-            </ol>
-                <label>Latitude: 
-                <input type="text" id="latitude" value="{{latitude}}"/></label>
-                <label>Longitude: 
-                <input type="text" id="longitude" value="{{longitude}}"/></label>
+          <label class="form">Site Name: 
+            <input type="text" id="name" value="{{name}}"/></label>
+          <div class="form">
+          <label>Latitude: 
+            <input type="text" id="latitude" value="{{latitude}}"/></label>
+          <label>Longitude: 
+            <input type="text" id="longitude" value="{{longitude}}"/></label>
+          </div>
         </div>
         <div class="btn-group" role="group" aria-label="sumbit and cancel">
             <button id="submit-button" class="btn btn-primary" type="button">submit</button>
@@ -98,7 +103,7 @@
     <script id="scenario-panel" type="text/x-handlebars-template">
       <h2>Scenario</h2>
       <div class="form" id="form">
-        <div class="scenario-info">
+        <div class="form scenario-info">
           <label>Scenario Name*: 
             <input type="text" id="name" value="{{name}}">
           </label>
@@ -106,7 +111,7 @@
           <label>Material: 
             <input type="text" id="material" value="{{material}}" >
           </label>
-          <div class="latlong-group">
+          <div class="form latlong-group">
             <label>Latitude*: 
               <input type="text" id="latitude" value="{{latitude}}">
             </label>
@@ -117,8 +122,8 @@
           </div>
         </div>
 
-        <div class="range-inputs">
-          <div class="range group">
+        <div class="form range-inputs">
+          <div class="form range group">
             <label>Consequence 1 Range (m): 
               <input type="text" id="range-0" value="{{range0}}">
             </label>
@@ -128,7 +133,7 @@
             </label>
           </div>
           
-          <div class="range group">
+          <div class="form range group">
             <label>Consequence 2 Range (m): 
               <input type="text" id="range-1" value="{{range1}}">
             </label>
@@ -138,7 +143,7 @@
             </label>
           </div>
           
-          <div class="range group">
+          <div class="form range group">
             <label>Consequence 3 Range (m): 
               <input type="text" id="range-2" value="{{range2}}">
             </label>

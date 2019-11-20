@@ -5,13 +5,14 @@
   "main": "index.html",
   "dependencies": {
     "EventEmitter": "^1.0.0",
-    "handlebars": "^4.5.1"
+    "handlebars": "^4.5.3"
   },
   "devDependencies": {
     "browserify": "^16.5.0",
     "budo": "^11.6.3",
     "eslint": "^6.6.0",
-    "watchify": "^3.11.1"
+    "watchify": "^3.11.1",
+    "lodash.template": ">=4.5.0"
   },
   "scripts": {
     "start": "budo js/index.js:bundle.js --live",

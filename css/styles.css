@@ -43,25 +43,30 @@ input {
 	width: 100%;
 }
 
-label {
+.form > label {
 	width: 100px;
 	margin-bottom: 0;
 }
+
 .open > .dropdown-menu {
 	cursor: pointer;
 	margin: 0;
 	padding: 0;
 }
+
 h1 {
 	font-size: 22px;
 }
+
 h2 {
 	font-size: 20px;
 }
+
 .scenarioDropdown {
 	width: 100%;
 	text-align: left;
 }
+
 .siteScenarios .controls {
 	display: inline-block;
 }

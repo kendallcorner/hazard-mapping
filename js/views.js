@@ -210,6 +210,7 @@ function showScenarioPanel (scenarioId, EM) {
     if(window.state.mapFeatures.scenarioList[scenarioId]) { 
         window.state.mapFeatures.scenarioList[scenarioId].marker.setMap(null); 
     }
+    getElementById("name").select();
     EM.emit("panel-created");
 
     function setNewOrGetScenario(site) {

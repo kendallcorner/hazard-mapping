@@ -36,7 +36,7 @@
 
     <script id="site-template" type="text/x-handlebars-template">
         <h2>Site</h2>
-        <div class="form">
+        <div class="form" id="form">
                 <label>Site Name: 
                 <input type="text" id="name" value="{{name}}"/></label>
             <input id="search-box" class="controls" type="text" size="30" placeholder="Search Box">
@@ -51,7 +51,7 @@
                 <input type="text" id="longitude" value="{{longitude}}"/></label>
         </div>
         <div class="btn-group" role="group" aria-label="sumbit and cancel">
-            <button id="site-submit-button" class="btn btn-primary" type="button">submit</button>
+            <button id="submit-button" class="btn btn-primary" type="button">submit</button>
             <button id="site-cancel-button" class="btn btn-primary" type="button">cancel</button>
         </div>
     </script>
@@ -62,7 +62,7 @@
     <script id="site-contents-panel" type="text/x-handlebars-template">
         <div class="siteScenarios"> 
           <h2>Site Scenarios</h2>
-          <ul class="form">
+          <ul class="form" id="form">
             {{#each scenarioList}}
               <li class="scenario">  
                 <div class="dropdown">
@@ -97,7 +97,7 @@
     </script>
     <script id="scenario-panel" type="text/x-handlebars-template">
       <h2>Scenario</h2>
-      <div class="form">
+      <div class="form" id="form">
         <div class="scenario-info">
           <label>Scenario Name*: 
             <input type="text" id="name" value="{{name}}">
@@ -151,7 +151,7 @@
 
       </div>
       <div class="btn-group" role="group" aria-label="Basic example">
-        <button id="scenario-submit-button" data-scenario-id="{{scenarioID}}" class="btn btn-primary" type="button">submit</button>
+        <button id="submit-button" data-scenario-id="{{scenarioID}}" class="btn btn-primary" type="button">submit</button>
         <button id="scenario-cancel-button" class="btn btn-primary" type="button">cancel</button>
       </div>
     </script>

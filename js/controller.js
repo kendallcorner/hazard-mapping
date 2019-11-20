@@ -109,7 +109,7 @@ function setUpPlacesSearch(element) {
 function listenToSiteEditor(EM) {
     setUpPlacesSearch(getElementById('search-box'));
     const eventListeners = placeLatLongListenerOnMap();
-    getElementById("site-submit-button").addEventListener("click", () => {
+    getElementById("submit-button").addEventListener("click", () => {
         EM.emit("new-site-submitted");
         removeLatLongListenerFromMap(eventListeners);
         if (window.state.searchMarker) window.state.searchMarker.setMap(null);
@@ -122,7 +122,7 @@ function listenToSiteEditor(EM) {
         if (window.state.searchMarker) window.state.searchMarker.setMap(null);
         removeMarkers();
     });
-
+    addKeyboardFunctionality();
     function removeMarkers() {
         if(window.state.placesMarkers) {
             for (const marker of window.state.placesMarkers) {
@@ -170,8 +170,7 @@ function runDropdownMenu(event, EM) {
 function listenToScenarioEditor(EM) {
     const state = window.state;
     const eventListeners = placeLatLongListenerOnMap();
-    const submitButton = getElementById("scenario-submit-button");
-    getElementById("scenario-submit-button").addEventListener("click", () => {
+    getElementById("submit-button").addEventListener("click", () => {
         EM.emit("create-edit-scenario", state.scenarioId);
         removeLatLongListenerFromMap(eventListeners);
         if (state.searchMarker) state.searchMarker.setMap(null);
@@ -190,6 +189,7 @@ function listenToScenarioEditor(EM) {
     } else {
         placeDraggableMarkerOnMap(state.site.latitude, state.site.longitude);
     }
+    addKeyboardFunctionality();
 }
 
 /*
@@ -278,4 +278,14 @@ function placeDraggableMarkerOnMap(latitude, longitude){
         draggable: true
     });
     google.maps.event.addListener(window.state.searchMarker, 'dragend', latLongListener);
+}
+
+function addKeyboardFunctionality() {
+    var form = getElementById("form");
+    form.addEventListener("keyup", function(event) {
+        // Enter key
+        if (event.keyCode === 13) {
+            getElementById("submit-button").click();
+      }
+    }); 
 }

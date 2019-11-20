@@ -183,7 +183,7 @@ function listenToSiteContentPanel(EM) {
     });
     // TODO:
     getElementById("save-site").addEventListener("click", () => {
-        EM.emit("", {});
+        saveSite(window.state.site);
     });
 
     function dropdownListener (event) {
@@ -194,6 +194,26 @@ function listenToSiteContentPanel(EM) {
         for (const dropdown of dropdowns) {
             dropdown.addEventListener("click", dropdownListener);
         }
+    }
+}
+
+function saveSite(location) {
+    //saves myLocation info as a json file.
+    const name = location.name + ".json";
+    const file = new Blob([JSON.stringify(location)], {type: "application/json"});
+    if (window.navigator.msSaveOrOpenBlob) // IE10+
+        window.navigator.msSaveOrOpenBlob(file, name);
+    else { // Others
+        const a = document.createElement("a"),
+                url = URL.createObjectURL(file);
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);  
+        }, 0); 
     }
 }
 

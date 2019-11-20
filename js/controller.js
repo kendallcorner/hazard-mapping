@@ -17,11 +17,25 @@ function initController(EM) {
         //loads existing JSON file as a location.
         const fileURL = window.URL.createObjectURL(loadButton.files[0]);
         console.log(fileURL);
-        $.getJSON(fileURL, function(json) {
-            window.state.site = json;
-            window.state.panel = "site-content";
-            EM.emit("change-panel");
-        });
+        //https://stackoverflow.com/questions/35294633/what-is-the-vanilla-js-version-of-jquerys-getjson#answers
+        const request = new XMLHttpRequest();
+        request.open('GET', fileURL, true);
+        request.onload = function() {
+            if (request.status >= 200 && request.status < 400) {
+                const json = JSON.parse(request.responseText);
+                window.state.site = json;
+                window.state.panel = "site-content";
+                EM.emit("change-panel");
+            } else {
+                throw new Error("File did not load properly: " + request.status);
+            }
+        };
+
+        request.onerror = function() {
+            throw new Error("File did not load properly: " + request.status);
+        };
+
+        request.send();
     });
 
     EM.on("panel-created", () => {

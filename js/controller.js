@@ -81,7 +81,7 @@ function setUpPlacesSearch(element) {
             }
             // Create a marker for each place.
             const marker = new window.googleAPI.maps.Marker({
-                map: map,
+                map: window.state.map,
                 title: place.formatted_address,
                 position: place.geometry.location,
                 icon: "http://192.168.11.75:9966/assets/searchPin.png"
@@ -99,7 +99,7 @@ function setUpPlacesSearch(element) {
                 setLatLongValues(place.geometry.location.lat(), place.geometry.location.lng());
             }
         });
-        map.fitBounds(bounds);
+        window.state.map.fitBounds(bounds);
     });
 }
 
@@ -242,8 +242,8 @@ function saveSite(location) {
 
 function placeLatLongListenerOnMap() {
     return [
-        window.googleAPI.maps.event.addListener(map, "click", latLongListener),
-        window.googleAPI.maps.event.addListener(map, "click", (event) => {
+        window.googleAPI.maps.event.addListener(window.state.map, "click", latLongListener),
+        window.googleAPI.maps.event.addListener(window.state.map, "click", (event) => {
             placeDraggableMarkerOnMap(event.latLng.lat(), event.latLng.lng());
         })
     ];
@@ -272,7 +272,7 @@ function placeDraggableMarkerOnMap(latitude, longitude){
         "http://192.168.11.75:9966/assets/scenario.png" :
         "http://192.168.11.75:9966/assets/sitePin.png";
     window.state.searchMarker = new window.googleAPI.maps.Marker({
-        map: map,
+        map: window.state.map,
         position: myLatLng,
         icon: icon,
         draggable: true

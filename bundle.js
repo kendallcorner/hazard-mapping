@@ -82,7 +82,7 @@ function setUpPlacesSearch(element) {
             }
             // Create a marker for each place.
             const marker = new window.googleAPI.maps.Marker({
-                map: map,
+                map: window.state.map,
                 title: place.formatted_address,
                 position: place.geometry.location,
                 icon: "http://192.168.11.75:9966/assets/searchPin.png"
@@ -100,7 +100,7 @@ function setUpPlacesSearch(element) {
                 setLatLongValues(place.geometry.location.lat(), place.geometry.location.lng());
             }
         });
-        map.fitBounds(bounds);
+        window.state.map.fitBounds(bounds);
     });
 }
 
@@ -243,8 +243,8 @@ function saveSite(location) {
 
 function placeLatLongListenerOnMap() {
     return [
-        window.googleAPI.maps.event.addListener(map, "click", latLongListener),
-        window.googleAPI.maps.event.addListener(map, "click", (event) => {
+        window.googleAPI.maps.event.addListener(window.state.map, "click", latLongListener),
+        window.googleAPI.maps.event.addListener(window.state.map, "click", (event) => {
             placeDraggableMarkerOnMap(event.latLng.lat(), event.latLng.lng());
         })
     ];
@@ -273,7 +273,7 @@ function placeDraggableMarkerOnMap(latitude, longitude){
         "http://192.168.11.75:9966/assets/scenario.png" :
         "http://192.168.11.75:9966/assets/sitePin.png";
     window.state.searchMarker = new window.googleAPI.maps.Marker({
-        map: map,
+        map: window.state.map,
         position: myLatLng,
         icon: icon,
         draggable: true
@@ -497,11 +497,11 @@ function initMap() {
     window.googleAPI = google;
     const myLatLng = new window.googleAPI.maps.LatLng(36.15911, -95.99374);
     //Home: 36.15911, -95.99374
-    map = new window.googleAPI.maps.Map(getElementById('map'), {
+    window.state.map = new window.googleAPI.maps.Map(getElementById('map'), {
         center: myLatLng,
         zoom: 18, 
         mapTypeId: 'satellite'});
-    map.setTilt(0);
+    window.state.map.setTilt(0);
 }
 
 /*
@@ -527,9 +527,9 @@ function clearMap() {
  */
 function returnHome(location) {
     const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
-    map.panTo(myLatLng);
-    map.setTilt(0);
-    map.setZoom(location.zoom);
+    window.state.map.panTo(myLatLng);
+    window.state.map.setTilt(0);
+    window.state.map.setZoom(location.zoom);
 }
 
 /*
@@ -538,13 +538,13 @@ function returnHome(location) {
 function mapSiteMarker (location) {
     clearMap();
     const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
-    map.panTo(myLatLng);
-    map.setTilt(0);
-    map.setZoom(18);
+    window.state.map.panTo(myLatLng);
+    window.state.map.setTilt(0);
+    window.state.map.setZoom(18);
     createHandlebarsViewFromTemplate("title", "<h1>Site: {{name}} </h1>", location);
     if (window.state.mapFeatures.siteMarker) window.state.mapFeatures.siteMarker.setMap(null);
     window.state.mapFeatures.siteMarker = new window.googleAPI.maps.Marker({
-        map: map,
+        map: window.state.map,
         title: location.name,
         position: myLatLng,
         icon: "http://192.168.11.75:9966/assets/sitePin.png"
@@ -575,7 +575,7 @@ function mapScenario (scenarioId, scenario) {
     const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
     window.state.mapFeatures.scenarioList[scenarioId] = {};
     window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Marker({
-        map: map,
+        map: window.state.map,
         title: name,
         position: myLatLng,
         icon: "http://192.168.11.75:9966/assets/scenario.png"
@@ -594,7 +594,7 @@ function drawGoogleMapsCircle(latitude, longitude, radius, color) {
     //creates Google Maps radius for HazMat
     const myLatLng = new google.maps.LatLng(Number(latitude), Number(longitude));
     const circle = new google.maps.Circle({
-        map: map,
+        map: window.state.map,
         radius: Number(radius),
         center: myLatLng,
         fillOpacity: 0,

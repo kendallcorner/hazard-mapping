@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "budo js/index.js:bundle.js --live",
-    "build": "browserify js/index.js -o bundle.js",
+    "build": "git checkout master; git merge development; browserify js/index.js -o bundle.js; git add .; git commit -m 'build'; git push",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -24,7 +24,7 @@
     "url": "git+https://github.com/kendallcorner/hazard-mapping.git"
   },
   "author": "kendall",
-  "license": "ISC",
+  "license": "none",
   "bugs": {
     "url": "https://github.com/kendallcorner/hazard-mapping/issues"
   },

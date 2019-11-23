@@ -43,6 +43,8 @@
           <div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
         </div>
     </div>
+    <div id="modalDiv">
+    </div>
 
     <script id="site-template" type="text/x-handlebars-template">
         <h2>Site</h2>
@@ -131,6 +133,7 @@
             </label>
           </div>
         </div>
+        <button class="btn btn-primary btn-long" type="button" data-toggle="modal" data-target="#modelModal">Model Scenario</button>
 
         <div class="form range-inputs">
           <div class="form range group">
@@ -169,6 +172,53 @@
         <button id="submit-button" data-scenario-id="{{scenarioID}}" class="btn btn-primary" type="button">submit</button>
         <button id="scenario-cancel-button" class="btn btn-primary" type="button">cancel</button>
       </div>
+    </script>
+    <script id="model-modal" type="text/x-handlebars-template">
+      <div class="modal fade" id="modelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title" id="exampleModalLabel">TNO modeling</h3>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+              <div class="modal-body">
+                <div class="container-fluid">
+                  <div class="row">
+                    <div class="col-md-4">.col-md-4</div>
+                    <div class="col-md-4 ml-auto">.col-md-4 .ml-auto</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-3 ml-auto">.col-md-3 .ml-auto</div>
+                    <div class="col-md-2 ml-auto">.col-md-2 .ml-auto</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 ml-auto">.col-md-6 .ml-auto</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-9">
+                      Level 1: .col-sm-9
+                      <div class="row">
+                        <div class="col-8 col-sm-6">
+                          Level 2: .col-8 .col-sm-6
+                        </div>
+                        <div class="col-4 col-sm-6">
+                          Level 2: .col-4 .col-sm-6
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </script>
     <script type="module" src="bundle.js"></script>
     <script defer src="js/secret.js"></script>

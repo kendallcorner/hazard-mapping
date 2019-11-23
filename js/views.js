@@ -206,6 +206,7 @@ function showScenarioPanel (scenarioId, EM) {
     const site = window.state.site;
     const scenario = setNewOrGetScenario(site);
     createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenario);
+    createHandlebarsViewFromTemplateId("modalDiv", "model-modal", scenario);
     // remove from current scenario from map
     if(window.state.mapFeatures.scenarioList[scenarioId]) { 
         window.state.mapFeatures.scenarioList[scenarioId].marker.setMap(null); 

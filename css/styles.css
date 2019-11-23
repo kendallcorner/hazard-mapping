@@ -12,6 +12,8 @@
 	float: right;
 	display: flex;
 	flex-direction: column;
+	padding-left: 20px;
+	padding-right: 40px;
 }
 
 #title {
@@ -20,11 +22,6 @@
 	float: right;
 	margin-bottom: 20px;
 	margin-top: 20px;
-}
-
-#navigator {
-	padding-left: 20px;
-	padding-right: 40px;
 }
 
 .menu {
@@ -75,6 +72,10 @@ h2 {
 	width: 110px;
 	margin-top: 1px;
 	margin-bottom: 1px;
+}
+
+.btn-long {
+	width: 220px;
 }
 
 @media (max-width: 900px) {

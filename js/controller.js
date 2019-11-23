@@ -181,7 +181,12 @@ function listenToScenarioEditor(EM) {
         removeLatLongListenerFromMap(eventListeners);
         if (state.searchMarker) state.searchMarker.setMap(null);
     });
-
+    getElementById("metric-english-toggle").addEventListener("click", () => {
+        window.alert("This feature has not been created yet");
+    });
+    getElementById("save-model").addEventListener("click", () => {
+        getModelData("tnoModel");
+    });
     // Make initial scenario marker
     if (state.scenarioId) {
         placeDraggableMarkerOnMap(state.site.scenarioList[state.scenarioId].latitude, 
@@ -191,6 +196,74 @@ function listenToScenarioEditor(EM) {
     }
     addKeyboardFunctionality();
 }
+
+function getModelData(modelName) {
+    if (modelName == "tnoModel") {
+        const model = {};
+        model.metricEnglish = getElementById("metric-english-toggle").getAttribute("data");
+        model.tnoVolume = getElementById("tnoVolume").value;
+        model.tnoHeat = getElementById("tnoHeat").value;
+        model.tnoAtmPress = getElementById("tnoAtmPress").value;
+        model.tnoCurveSelect = getElementById("tnoCurveSelect").value;
+        model.tnoPressThresh = [
+            getElementById("tnoPressThresh1").value, 
+            getElementById("tnoPressThresh2").value, 
+            getElementById("tnoPressThresh3").value
+        ];
+
+        const radiusForPs = TNOmodelFromPressArray(model);
+
+        getElementById("range-0").value = radiusForPs[0];
+        getElementById("range-1").value = radiusForPs[1];
+        getElementById("range-2").value = radiusForPs[2];
+    }
+}
+
+function TNOmodelFromPressArray(model) {
+    let distances = [];
+    for (const p of model.tnoPressThresh) {
+        const scaledP = (p/model.tnoAtmPress);
+        console.log("scaledP = " + scaledP);
+        const curve = window.state.tnoTable[model.tnoCurveSelect];
+        const rbar = tableLookup(curve, scaledP);
+        console.log("rbar = " + rbar);
+        if (rbar) {
+            distances.push(rbar*(model.tnoHeat*1000*model.tnoVolume/(model.tnoAtmPress*100))**(1/3));
+        }
+        
+    }
+    console.log(distances);
+    return distances;
+}
+
+function tableLookup(table, scaledPressure) {
+    if (scaledPressure > table.overpressure[0]) {
+        window.alert("Not all thresholds can be reached by the chosen curve");
+        return false;
+    } else {
+        for (let i=0; i < table.overpressure.length; i++) {
+            if (scaledPressure > table.overpressure[i]) {
+                let interp = logInterpolateX (
+                    table.distance[i], 
+                    table.overpressure[i], 
+                    table.distance[i-1], 
+                    table.overpressure[i-1], 
+                    scaledPressure);
+                console.log(interp);
+                return interp;
+            }
+        }
+    }
+}
+
+function interpolate(x1, y1, x2, y2, x) { return y1+(y2-y1)*(x-x1)/(x2-x1); }
+function logInterpolateX(x1, y1, x2, y2, y) { 
+    // https://math.stackexchange.com/questions/1777303/interpolation-point-fitting-onto-a-logarithmic-line-segment
+    // https://en.wikipedia.org/wiki/Log%E2%80%93log_plot
+    const slope = Math.log(y2/y1)/Math.log(x2/x1);
+    return x1*(y/y1)**(1/slope); 
+}
+
 
 /*
  * Set up Site Content panel listeners

@@ -14,6 +14,7 @@ function setupModel(EM) {
             longitude: -95.99374,
             zoom: 18
         },
+        tnoTable: {}
     };
 
     /**
@@ -82,6 +83,15 @@ function setupModel(EM) {
              throw new Error("No scenarioMarker exists for " + state.scenarioId);
          }
     });
+
+    try {
+        $.getJSON("data/tnoTable.json", function(json) {
+            state.tnoTable = json;
+        });
+    } catch (error) {
+        throw new Error("Error Loading data: ", error);
+    }
+
     return state;
 }
 

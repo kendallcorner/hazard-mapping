@@ -186,34 +186,48 @@
               <div class="modal-body">
                 <div class="container-fluid">
                   <div class="row">
-                    <div class="col-md-4">.col-md-4</div>
-                    <div class="col-md-4 ml-auto">.col-md-4 .ml-auto</div>
+                    <button class="btn btn-primary btn-long" id="metric-english-toggle" data="metric">Metric: Click for English</button>
                   </div>
                   <div class="row">
-                    <div class="col-md-3 ml-auto">.col-md-3 .ml-auto</div>
-                    <div class="col-md-2 ml-auto">.col-md-2 .ml-auto</div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-6 ml-auto">.col-md-6 .ml-auto</div>
-                  </div>
-                  <div class="row">
-                    <div class="col-sm-9">
-                      Level 1: .col-sm-9
-                      <div class="row">
-                        <div class="col-8 col-sm-6">
-                          Level 2: .col-8 .col-sm-6
-                        </div>
-                        <div class="col-4 col-sm-6">
-                          Level 2: .col-4 .col-sm-6
-                        </div>
-                      </div>
+                    <div class="col-md-6">
+                      <label class="TNOform">Volume of Congested Area (<span id="tnoVolumeUnit">m^3</span>)</label>
                     </div>
+                    <div class="col-md-6">
+                      <input class="TNOform" type="text" id="tnoVolume" value="1000">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="TNOform">Heat of Combustion (<span id="tnoHocUnit">kJ/m^3</span>)</label>
+                    </div>
+                    <div class="col-md-6">
+                      <input class="TNOform" type="text" id="tnoHeat" value="3500">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="TNOform">Atmospheric Pressure (<span class="tnoPressureUnit">mbar</span>)</label>
+                    </div>
+                    <div class="col-md-6">
+                      <input class="TNOform" type="text" id="tnoAtmPress" value="1013.25">
+                    </div>
+                    <div class="col-md-6">
+                      <select id="tnoCurveSelect">
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <label class="TNOform">Overpressure Thresholds (<span class="tnoPressureUnit">mbar</span>)</label>
+                  </div>
+                  <div class="row">
+                    <input class="TNOform" type="text" id="tnoPressThresh1" value="50">
+                    <input class="TNOform" type="text" id="tnoPressThresh2" value="100">
+                    <input class="TNOform" type="text" id="tnoPressThresh3" value="500">
+                  </div>
+                  <div class="row">
+                     <a href="https://processsafetyrelief.com/2019/11/22/TNO-model/" target="_blank">More information on TNO explosion curves and use of the model.</a>
                   </div>
                 </div>
               </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary">Save changes</button>
+              <button type="button" class="btn btn-primary" id="save-model">Save model</button>
             </div>
           </div>
         </div>

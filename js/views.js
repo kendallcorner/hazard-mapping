@@ -211,6 +211,14 @@ function showScenarioPanel (scenarioId, EM) {
     if(window.state.mapFeatures.scenarioList[scenarioId]) { 
         window.state.mapFeatures.scenarioList[scenarioId].marker.setMap(null); 
     }
+
+    const dropdown = getElementById("tnoCurveSelect");
+    for (const optionText of Object.keys(window.state.tnoTable)) {
+        const option = document.createElement("option");
+        option.text = optionText;
+        dropdown.add(option);
+    }
+    
     getElementById("name").select();
     EM.emit("panel-created");
 

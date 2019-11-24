@@ -118,7 +118,7 @@ function mapSiteMarker (location) {
         map: window.state.map,
         title: location.name,
         position: myLatLng,
-        icon: "http://192.168.11.75:9966/assets/sitePin.png"
+        icon: "assets/sitePin.png"
     });
 }
 
@@ -149,7 +149,7 @@ function mapScenario (scenarioId, scenario) {
         map: window.state.map,
         title: name,
         position: myLatLng,
-        icon: "http://192.168.11.75:9966/assets/scenario.png"
+        icon: "assets/scenario.png"
     });
 }
 
@@ -206,10 +206,19 @@ function showScenarioPanel (scenarioId, EM) {
     const site = window.state.site;
     const scenario = setNewOrGetScenario(site);
     createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenario);
+    createHandlebarsViewFromTemplateId("modalDiv", "model-modal", scenario);
     // remove from current scenario from map
     if(window.state.mapFeatures.scenarioList[scenarioId]) { 
         window.state.mapFeatures.scenarioList[scenarioId].marker.setMap(null); 
     }
+
+    const dropdown = getElementById("tnoCurveSelect");
+    for (const optionText of Object.keys(window.state.tnoTable)) {
+        const option = document.createElement("option");
+        option.text = optionText;
+        dropdown.add(option);
+    }
+
     getElementById("name").select();
     EM.emit("panel-created");
 

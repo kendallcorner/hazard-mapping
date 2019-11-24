@@ -118,7 +118,7 @@ function mapSiteMarker (location) {
         map: window.state.map,
         title: location.name,
         position: myLatLng,
-        icon: "http://192.168.11.75:9966/assets/sitePin.png"
+        icon: "assets/sitePin.png"
     });
 }
 
@@ -149,7 +149,7 @@ function mapScenario (scenarioId, scenario) {
         map: window.state.map,
         title: name,
         position: myLatLng,
-        icon: "http://192.168.11.75:9966/assets/scenario.png"
+        icon: "assets/scenario.png"
     });
 }
 
@@ -218,7 +218,7 @@ function showScenarioPanel (scenarioId, EM) {
         option.text = optionText;
         dropdown.add(option);
     }
-    
+
     getElementById("name").select();
     EM.emit("panel-created");
 

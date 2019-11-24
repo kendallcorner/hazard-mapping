@@ -84,7 +84,7 @@ function setUpPlacesSearch(element) {
                 map: window.state.map,
                 title: place.formatted_address,
                 position: place.geometry.location,
-                icon: "http://192.168.11.75:9966/assets/searchPin.png"
+                icon: "assets/searchPin.png"
             });
             window.googleAPI.maps.event.addListener(marker, "click", latLongListener);
             window.state.placesMarkers.push(marker);
@@ -210,6 +210,10 @@ function getModelData(modelName) {
             getElementById("tnoPressThresh2").value, 
             getElementById("tnoPressThresh3").value
         ];
+
+        model.tnoPressThresh.sort((a, b) => {return b-a;});
+
+        // TODO: store model in state
 
         const radiusForPs = TNOmodelFromPressArray(model);
 
@@ -342,8 +346,8 @@ function placeDraggableMarkerOnMap(latitude, longitude){
     const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
     if (window.state.searchMarker) window.state.searchMarker.setMap(null);
     const icon = window.state.panel == "scenario-editor" ?
-        "http://192.168.11.75:9966/assets/scenario.png" :
-        "http://192.168.11.75:9966/assets/sitePin.png";
+        "assets/scenario.png" :
+        "assets/sitePin.png";
     window.state.searchMarker = new window.googleAPI.maps.Marker({
         map: window.state.map,
         position: myLatLng,

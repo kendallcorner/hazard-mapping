@@ -46,8 +46,9 @@ function initController(EM) {
             listenToSiteContentPanel(EM);
         } else if (panel === "scenario-editor") {
             listenToScenarioEditor(EM);
+        } else if (panel === "bubbleplot-editor") {
         } else {
-            console.err("No panel of the name ", panel);
+            throw new Error("No panel of the name ", panel);
         }
     });
 }
@@ -275,6 +276,10 @@ function logInterpolateX(x1, y1, x2, y2, y) {
 function listenToSiteContentPanel(EM) {
     getElementById("new-scenario").addEventListener("click", () => {
         window.state.panel = "scenario-editor";
+        EM.emit("change-panel");
+    });
+    getElementById("new-bubbleplot").addEventListener("click", () => {
+        window.state.panel = "bubbleplot-editor";
         EM.emit("change-panel");
     });
     getElementById("edit-site").addEventListener("click", () => {

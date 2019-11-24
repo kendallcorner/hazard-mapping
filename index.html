@@ -23,7 +23,7 @@
   <body>
     <div id="map"></div>
 
-    <div id="side-panel">
+    <div id="side-panel" class="pre-scrollable">
       <div id="title">
         <h1>Load Site</h1>
       </div>
@@ -111,6 +111,40 @@
           </ul>
           <button class="btn btn-primary" type="button" id="new-scenario">Add Scenario</button>
         </div>
+        <div class="siteBubblePlots">
+          <h2>Site Plots</h2>
+          <ul class="form" id="form">
+            {{#each bubblePlot}}
+              <li class="bubbleplot">  
+                <div class="dropdown">
+                  <button class="btn btn-light dropdown-toggle scenarioDropdown" type="button" data-toggle="dropdown">
+                    {{this.name}}
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><button class="btn btn-light dropdown-button" id="{{this.scenarioId}}-delete">delete</button></li>
+                    <li><button class="btn btn-dark dropdown-button" id="{{this.scenarioId}}-edit">edit</button></li>
+                    <li><button class="btn btn-light dropdown-button" id="{{this.scenarioId}}-hide">
+                        {{#if this.hidden}}
+                          unhide
+                        {{else}}
+                          hide
+                        {{/if}}
+                    </button></li>
+                    <li><button class="btn btn-light dropdown-button" id="{{this.scenarioId}}-hideRanges">
+                        {{#if this.rangesHidden}}
+                          unhide hazard ranges
+                        {{else}}
+                          hide hazard ranges
+                        {{/if}}
+                    </button></li>
+                  </ul>
+                </div>
+              </li>
+            {{/each}}
+          </ul>
+          <button class="btn btn-primary" type="button" id="new-bubbleplot">Add Plot</button>
+        </div>
     </script>
     <script id="scenario-panel" type="text/x-handlebars-template">
       <h2>Scenario</h2>
@@ -172,6 +206,28 @@
         <button id="submit-button" data-scenario-id="{{scenarioID}}" class="btn btn-primary" type="button">submit</button>
         <button id="scenario-cancel-button" class="btn btn-primary" type="button">cancel</button>
       </div>
+    </script>
+    <script id="bubbleplot-panel" type="text/x-handlebars-template">
+        <div> 
+          <h2>Bubbleplot Setup</h2>
+          <ul class="form" id="form">
+            {{#each scenarioList}}
+              <li class="scenario"><input type="checkbox" name="{{this.name}}" >{{this.name}}
+                <ul>
+                  <li class="range">
+                    <input type="checkbox" name="{{this.name}}-range0" >Range 0 ({{this.range0}})
+                  </li>
+                  <li class="range">
+                    <input type="checkbox" name="{{this.name}}-range1" >Range 1 ({{this.range1}})
+                  </li>
+                  <li class="range">
+                    <input type="checkbox" name="{{this.name}}-range1" >Range 1 ({{this.range1}})
+                  </li>
+                </ul>
+              </li>
+            {{/each}}
+          </ul>
+        </div>
     </script>
     <script id="model-modal" type="text/x-handlebars-template">
       <div class="modal fade" id="modelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">

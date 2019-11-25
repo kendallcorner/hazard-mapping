@@ -8,6 +8,7 @@ function setupModel(EM) {
         mapFeatures: {},
         scenarioCount: 0,
         scenarioId: null,
+        bubbleplotId: null,
         site: {
             name: "Home",
             latitude: 36.15911,
@@ -45,7 +46,7 @@ function setupModel(EM) {
             scenarioId = "scenario-" + state.scenarioCount;
             state.scenarioCount +=  1;
         }
-        state.scenarioId = scenarioId;
+        state.mapItem = scenarioId;
         try {
             state.site.scenarioList[scenarioId] = new Scenario({
                 name: getElementById('name').value,
@@ -66,21 +67,56 @@ function setupModel(EM) {
             return;
         }
         window.state.panel = "site-content";
-        window.state.scenarioId = null;
+        window.state.mapItem = null;
         EM.emit("change-panel");
     });
 
-    EM.on("delete-scenario", () => {
-        if(state.mapFeatures.scenarioList[state.scenarioId]) {
-        for (const featureKey in state.mapFeatures.scenarioList[state.scenarioId]) {
-            state.mapFeatures.scenarioList[state.scenarioId][featureKey].setMap(null);
+    EM.on("create-bubbleplot", (bubbleplotId) => {
+        if (!bubbleplotId) {
+            bubbleplotId = "bubbleplot-" + state.scenarioCount;
+            state.scenarioCount +=  1;
         }
-           delete state.site.scenarioList[state.scenarioId];
+        state.bubbleplotId = bubbleplotId;
+        let rangelist = [];
+        for (const scenario of Object.keys(state.site.scenarioList)) {
+            const range0check = getElementById(scenario + "-range0");
+            const range1check = getElementById(scenario + "-range1");
+            const range2check = getElementById(scenario + "-range2");
+            if (range0check || range1check || range2check) rangelist[scenario] = [];
+            if (range0check.checked) rangelist[scenario].push(range0check.id);
+            if (range1check.checked) rangelist[scenario].push(range1check.id);
+            if (range2check.checked) rangelist[scenario].push(range2check.id);
+        }
+
+        try {
+            state.site.bubbleplotList[bubbleplotId] = new Bubbleplot({
+                name: getElementById('name').value,
+                bubbleplotId: bubbleplotId,
+                rangelist: rangelist
+            }); 
+        } catch (error) {
+            window.alert(error);
+            EM.emit("change-panel");
+            return;
+        }
+        window.state.panel = "site-content";
+        window.state.mapItem = null;
+        EM.emit("change-panel");
+    });
+
+    EM.on("delete-siteItem", () => {
+        if(state.site.scenarioList[state.mapItem]) {
+           delete state.site.scenarioList[state.mapItem];
            window.state.panel = "site-content";
-           window.state.scenarioId = null;
+           window.state.mapItem = null;
+           EM.emit("change-panel");
+         } else if (state.site.bubbleplotList[state.mapItem]) {
+           delete state.site.bubbleplotList[state.mapItem];
+           window.state.panel = "site-content";
+           window.state.mapItem = null;
            EM.emit("change-panel");
          } else {
-             throw new Error("No scenarioMarker exists for " + state.scenarioId);
+             throw new Error("No scenarioMarker exists for " + state.mapItem);
          }
     });
 
@@ -111,6 +147,18 @@ function Scenario (scenarioInputs) {
     return Object.assign(this, defaultValues, scenarioInputs);
 }
 
+function Bubbleplot (inputs) {
+    if (!inputs.name) throw new Error("Name is required");
+    if (!inputs.bubbleplotId) throw new Error("bubbleplotId is not being assigned");
+    if (inputs.rangelist === []) throw new Error("At least one range must be selected");
+
+    const defaultValues = {
+        hidden: false,
+        rangesHidden: false,
+    };
+    return Object.assign(this, defaultValues, inputs);
+}
+
 Scenario.prototype = {
      constructor: Scenario,
      update: function (newScenarioInput) { return Object.assign(this, newScenarioInput); }
@@ -123,7 +171,8 @@ function makeSite (overrides) {
     if (!overrides.longitude) throw new Error("Longitude is required (click to place on map)");
 
     const defaultValues = {
-        scenarioList: {}
+        scenarioList: {},
+        bubbleplotList: {}
     };
     overrides.latitude = Number(overrides.latitude).toFixed(5);
     overrides.longitude = Number(overrides.longitude).toFixed(5);

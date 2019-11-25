@@ -20,10 +20,10 @@ function initViews(EM) {
             mapSiteMarker(site);
             mapAll(window.state.site.scenarioList);
         } else if (panel === "scenario-editor") {
-            showScenarioPanel(window.state.scenarioId, EM);
+            showScenarioPanel(window.state.mapItem, EM);
             mapSiteMarker(site);
         } else if (panel === "bubbleplot-editor") {
-            showBubbleplotPanel(window.state.scenarioId, EM);
+            showBubbleplotPanel(window.state.mapItem, EM);
             mapSiteMarker(site);
             mapAll(window.state.site.scenarioList);
         } else {

@@ -47,6 +47,7 @@ function initController(EM) {
         } else if (panel === "scenario-editor") {
             listenToScenarioEditor(EM);
         } else if (panel === "bubbleplot-editor") {
+            listenToBubbleplotEditor(EM);
         } else {
             throw new Error("No panel of the name ", panel);
         }
@@ -138,32 +139,67 @@ function listenToSiteEditor(EM) {
 function runDropdownMenu(event, EM) {
     const dropdownIdSplit = event.target.id.split("-");
     if (dropdownIdSplit.length === 3) {
-        const [ scenario, scenarioNum, menuFunction ] = dropdownIdSplit;
-        const scenarioId = scenario + "-" + scenarioNum;
-        switch(menuFunction) {
-            case "delete":
-                window.state.scenarioId = scenarioId;
-                EM.emit("delete-scenario");
-                break;
-            case "edit":
-                window.state.scenarioId = scenarioId;
-                window.state.panel = "scenario-editor";
-                EM.emit("change-panel");
-                break;
-            case "hide":
-                window.state.site.scenarioList[scenarioId].hidden = !window.state.site.scenarioList[scenarioId].hidden;
-                EM.emit("change-panel");
-                break;
-            case "hideRanges":
-                window.state.site.scenarioList[scenarioId].rangesHidden = !window.state.site.scenarioList[scenarioId].rangesHidden;
-                EM.emit("change-panel");
-                break;
-            default:
-                throw new Error("dropdown-scneario-menu-item menuFunction is not correct", menuFunction);
-        } 
+        const [ type, scenarioNum, menuFunction ] = dropdownIdSplit;
+        const id = type + "-" + scenarioNum;
+        if (type === "bubbleplot") {
+            switch(menuFunction) {
+                case "delete":
+                    window.state.mapItem = id;
+                    EM.emit("delete-siteItem");
+                    break;
+                case "edit":
+                    window.state.mapItem = id;
+                    window.state.panel = "bubbleplot-editor";
+                    EM.emit("change-panel");
+                    break;
+                case "hide":
+                    window.state.site.bubbleplotList[id].hidden = !window.state.site.bubbleplotList[id].hidden;
+                    EM.emit("change-panel");
+                    break;
+                default:
+                    throw new Error("dropdown-scenario-menu-item menuFunction is not correct", targetId);
+            }
+        } else if (type === "scenario") {
+            switch(menuFunction) {
+                case "delete":
+                    window.state.mapItem = id;
+                    EM.emit("delete-siteItem");
+                    break;
+                case "edit":
+                    window.state.mapItem = id;
+                    window.state.panel = "scenario-editor";
+                    EM.emit("change-panel");
+                    break;
+                case "hide":
+                    window.state.site.scenarioList[id].hidden = !window.state.site.scenarioList[id].hidden;
+                    EM.emit("change-panel");
+                    break;
+                case "hideRanges":
+                    window.state.site.scenarioList[id].rangesHidden = !window.state.site.scenarioList[id].rangesHidden;
+                    EM.emit("change-panel");
+                    break;
+                default:
+                    throw new Error("dropdown-scneario-menu-item menuFunction is not correct", targetId);
+            }
+        } else{
+            throw new Error("target Id on dropdown-scneario-menu-item is not correct", targetId);
+        }
     } else {
         throw new Error("target Id on dropdown-scneario-menu-item is not correct", targetId);
     }
+}
+
+/*
+ * Set up Scenario Editor listeners
+ */
+function listenToBubbleplotEditor(EM) {
+    getElementById("submit-button").addEventListener("click", () => {
+        EM.emit("create-bubbleplot");
+    });
+    getElementById("bubbleplot-cancel-button").addEventListener("click", () => {
+        state.panel = "site-content";
+        EM.emit("change-panel");
+    });
 }
 /*
  * Set up Scenario Editor listeners
@@ -172,7 +208,7 @@ function listenToScenarioEditor(EM) {
     const state = window.state;
     const eventListeners = placeLatLongListenerOnMap();
     getElementById("submit-button").addEventListener("click", () => {
-        EM.emit("create-edit-scenario", state.scenarioId);
+        EM.emit("create-edit-scenario", state.mapItem);
         removeLatLongListenerFromMap(eventListeners);
         if (state.searchMarker) state.searchMarker.setMap(null);
     });
@@ -189,9 +225,9 @@ function listenToScenarioEditor(EM) {
         getModelData("tnoModel");
     });
     // Make initial scenario marker
-    if (state.scenarioId) {
-        placeDraggableMarkerOnMap(state.site.scenarioList[state.scenarioId].latitude, 
-            state.site.scenarioList[state.scenarioId].longitude);
+    if (state.mapItem) {
+        placeDraggableMarkerOnMap(state.site.scenarioList[state.mapItem].latitude, 
+            state.site.scenarioList[state.mapItem].longitude);
     } else {
         placeDraggableMarkerOnMap(state.site.latitude, state.site.longitude);
     }

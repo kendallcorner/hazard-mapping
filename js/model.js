@@ -8,6 +8,7 @@ function setupModel(EM) {
         mapFeatures: {},
         scenarioCount: 0,
         scenarioId: null,
+        bubbleplotId: null,
         site: {
             name: "Home",
             latitude: 36.15911,
@@ -45,7 +46,7 @@ function setupModel(EM) {
             scenarioId = "scenario-" + state.scenarioCount;
             state.scenarioCount +=  1;
         }
-        state.scenarioId = scenarioId;
+        state.mapItem = scenarioId;
         try {
             state.site.scenarioList[scenarioId] = new Scenario({
                 name: getElementById('name').value,
@@ -66,21 +67,56 @@ function setupModel(EM) {
             return;
         }
         window.state.panel = "site-content";
-        window.state.scenarioId = null;
+        window.state.mapItem = null;
         EM.emit("change-panel");
     });
 
-    EM.on("delete-scenario", () => {
-        if(state.mapFeatures.scenarioList[state.scenarioId]) {
-        for (const featureKey in state.mapFeatures.scenarioList[state.scenarioId]) {
-            state.mapFeatures.scenarioList[state.scenarioId][featureKey].setMap(null);
+    EM.on("create-bubbleplot", (bubbleplotId) => {
+        if (!bubbleplotId) {
+            bubbleplotId = "bubbleplot-" + state.scenarioCount;
+            state.scenarioCount +=  1;
         }
-           delete state.site.scenarioList[state.scenarioId];
+        state.bubbleplotId = bubbleplotId;
+        let rangelist = {};
+        for (const scenario of Object.keys(state.site.scenarioList)) {
+            const range0check = getElementById(scenario + "-range0");
+            const range1check = getElementById(scenario + "-range1");
+            const range2check = getElementById(scenario + "-range2");
+            if (range0check || range1check || range2check) rangelist[scenario] = [];
+            if (range0check.checked) rangelist[scenario].push("range0");
+            if (range1check.checked) rangelist[scenario].push("range1");
+            if (range2check.checked) rangelist[scenario].push("range2");
+        }
+
+        try {
+            state.site.bubbleplotList[bubbleplotId] = new Bubbleplot({
+                name: getElementById('name').value,
+                bubbleplotId: bubbleplotId,
+                rangelist: rangelist
+            }); 
+        } catch (error) {
+            window.alert(error);
+            EM.emit("change-panel");
+            return;
+        }
+        window.state.panel = "site-content";
+        window.state.mapItem = null;
+        EM.emit("change-panel");
+    });
+
+    EM.on("delete-siteItem", () => {
+        if(state.site.scenarioList[state.mapItem]) {
+           delete state.site.scenarioList[state.mapItem];
            window.state.panel = "site-content";
-           window.state.scenarioId = null;
+           window.state.mapItem = null;
+           EM.emit("change-panel");
+         } else if (state.site.bubbleplotList[state.mapItem]) {
+           delete state.site.bubbleplotList[state.mapItem];
+           window.state.panel = "site-content";
+           window.state.mapItem = null;
            EM.emit("change-panel");
          } else {
-             throw new Error("No scenarioMarker exists for " + state.scenarioId);
+             throw new Error("No scenarioMarker exists for " + state.mapItem);
          }
     });
 
@@ -111,6 +147,27 @@ function Scenario (scenarioInputs) {
     return Object.assign(this, defaultValues, scenarioInputs);
 }
 
+function Bubbleplot (inputs) {
+    if (!inputs.name) throw new Error("Name is required");
+    if (!inputs.bubbleplotId) throw new Error("bubbleplotId is not being assigned");
+    if (inputs.rangelist === []) throw new Error("At least one range must be selected");
+
+    const defaultValues = {
+        hidden: false,
+        rangesHidden: false,
+    };
+
+    defaultValues.path = [];
+    for (const scenario of Object.keys(inputs.rangelist)) {
+        const location = window.state.site.scenarioList[scenario];
+        const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
+        for (const range of inputs.rangelist[scenario]) {
+            defaultValues.path.push(makeCirclePath(myLatLng, location[range]));
+        }
+    }
+    return Object.assign(this, defaultValues, inputs);
+}
+
 Scenario.prototype = {
      constructor: Scenario,
      update: function (newScenarioInput) { return Object.assign(this, newScenarioInput); }
@@ -123,9 +180,31 @@ function makeSite (overrides) {
     if (!overrides.longitude) throw new Error("Longitude is required (click to place on map)");
 
     const defaultValues = {
-        scenarioList: {}
+        scenarioList: {},
+        bubbleplotList: {}
     };
     overrides.latitude = Number(overrides.latitude).toFixed(5);
     overrides.longitude = Number(overrides.longitude).toFixed(5);
     return Object.assign(defaultValues, overrides);
+}
+
+function makeCirclePath(point, radius) { 
+    // https://stackoverflow.com/questions/23154254/google-map-multiple-overlay-no-cumulative-opacity
+    const d2r = Math.PI / 180;   // degrees to radians 
+    const r2d = 180 / Math.PI;   // radians to degrees 
+    const earthsradius = 6371000; // 3963 is the radius of the earth in meters
+    const points = 32; 
+
+    // find the raidus in lat/lon 
+    const rlat = (radius / earthsradius) * r2d; 
+    const rlng = rlat / Math.cos(point.lat() * d2r); 
+
+    const extp = [];
+    for (let i=0; i < points + 1; i++) {
+        const theta = Math.PI * (i / (points/2)); 
+        const ey = point.lng() + (rlng * Math.cos(theta)); // center a + radius x * cos(theta) 
+        const ex = point.lat() + (rlat * Math.sin(theta)); // center b + radius y * sin(theta) 
+        extp.push(new google.maps.LatLng(ex, ey));
+    }
+    return extp;
 }

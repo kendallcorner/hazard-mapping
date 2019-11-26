@@ -19,9 +19,14 @@ function initViews(EM) {
             showSiteContentPanel(site, EM);
             mapSiteMarker(site);
             mapAll(window.state.site.scenarioList);
+            mapBubbleplots(window.state.site.bubbleplotList);
         } else if (panel === "scenario-editor") {
-            showScenarioPanel(window.state.scenarioId, EM);
+            showScenarioPanel(window.state.mapItem, EM);
             mapSiteMarker(site);
+        } else if (panel === "bubbleplot-editor") {
+            showBubbleplotPanel(window.state.mapItem, EM);
+            mapSiteMarker(site);
+            mapAll(window.state.site.scenarioList);
         } else {
             console.err("No panel of the name ", panel);
         }
@@ -90,6 +95,11 @@ function clearMap() {
             }
         }
     }
+    if(mapFeatures.bubbleplotList) { 
+        for (const mapFeature of Object.values(mapFeatures.bubbleplotList)) {
+            mapFeature.setMap(null);
+        }
+    }
     window.state.mapFeatures = {};
 }
 
@@ -136,6 +146,29 @@ function mapAll (scenarioList) {
             if (!hidden) {
                 mapScenario(scenarioId, scenario);
                 if(!rangesHidden) { mapHazardRanges(scenarioId, scenario); }
+            }
+        }
+    }
+}
+
+function mapBubbleplots (bubbleplotList) {
+    if (!window.state.mapFeatures) window.state.mapFeatures = {};
+    if (!window.state.mapFeatures.bubbleplotList) window.state.mapFeatures.bubbleplotList = {};
+
+    if (bubbleplotList && bubbleplotList != {}) {
+        const bubbleplots = Object.entries(bubbleplotList);
+        for (const [ bubbleplotId, bubbleplot ] of bubbleplots) {
+            const { hidden, name, path } = bubbleplot;
+            if (!hidden) {
+                const colors =  ["#F0F", "#F00", "#00F"];
+                window.state.mapFeatures.bubbleplotList[bubbleplotId] = new google.maps.Polygon({
+                    paths: path,
+                    strokeOpacity: 0,
+                    strokeWeight: 0,
+                    fillColor: "#F00",
+                    fillOpacity: 0.35
+                });
+                window.state.mapFeatures.bubbleplotList[bubbleplotId].setMap(window.state.map);
             }
         }
     }
@@ -235,3 +268,10 @@ function showScenarioPanel (scenarioId, EM) {
     }
 }
 
+/*
+ * Bring up bubbleplot editor panel
+ */
+function showBubbleplotPanel (scenarioId, EM) {
+    createHandlebarsViewFromTemplateId("navigator", "bubbleplot-panel", window.state.site);
+    EM.emit("panel-created");
+}

@@ -9,6 +9,7 @@
 #side-panel {
 	width: 33vw;
 	height: 100vh;
+	overflow: scroll;
 	float: right;
 	display: flex;
 	flex-direction: column;
@@ -106,4 +107,8 @@ h2 {
 
 .dropdown-button:hover, .dropdown-button:focus, .dropdown-button:active, .dropdown-button.active {
 	background-color: #FFF;
+}
+
+.pre-scrollable {
+	max-height: 100vh;
 }

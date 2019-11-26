@@ -23,7 +23,7 @@
   <body>
     <div id="map"></div>
 
-    <div id="side-panel">
+    <div id="side-panel" class="pre-scrollable">
       <div id="title">
         <h1>Load Site</h1>
       </div>
@@ -109,7 +109,40 @@
               </li>
             {{/each}}
           </ul>
-          <button class="btn btn-primary" type="button" id="new-scenario">Add Scenario</button>
+          <div class="btn-group" role="group" aria-label="sumbit and cancel">
+            <button class="btn btn-primary" type="button" id="new-scenario">Add Scenario</button>
+            <button class="btn btn-primary" type="button" id="hide-scenarios">Hide all</button>
+          </div>
+        </div>
+        <div class="siteBubblePlots">
+          <h2>Site Plots</h2>
+          <ul class="form" id="form">
+            {{#each bubbleplotList}}
+              <li class="bubbleplot">  
+                <div class="dropdown">
+                  <button class="btn btn-light dropdown-toggle scenarioDropdown" type="button" data-toggle="dropdown">
+                    {{this.name}}
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><button class="btn btn-light dropdown-button" id="{{this.bubbleplotId}}-delete">delete</button></li>
+                    <li><button class="btn btn-dark dropdown-button" id="{{this.bubbleplotId}}-edit">edit</button></li>
+                    <li><button class="btn btn-light dropdown-button" id="{{this.bubbleplotId}}-hide">
+                        {{#if this.hidden}}
+                          unhide
+                        {{else}}
+                          hide
+                        {{/if}}
+                    </button></li>
+                  </ul>
+                </div>
+              </li>
+            {{/each}}
+          </ul>
+          <div class="btn-group" role="group" aria-label="sumbit and cancel">
+            <button class="btn btn-primary" type="button" id="new-bubbleplot">Add Plot</button>
+            <button class="btn btn-primary" type="button" id="hide-bubbleplots">Hide all</button>
+          </div>
         </div>
     </script>
     <script id="scenario-panel" type="text/x-handlebars-template">
@@ -172,6 +205,35 @@
         <button id="submit-button" data-scenario-id="{{scenarioID}}" class="btn btn-primary" type="button">submit</button>
         <button id="scenario-cancel-button" class="btn btn-primary" type="button">cancel</button>
       </div>
+    </script>
+    <script id="bubbleplot-panel" type="text/x-handlebars-template">
+        <div> 
+          <h2>Bubbleplot Setup</h2>
+          <div class="form" id="form">
+            <label>Bubbleplot Name*: 
+              <input type="text" id="name" value="{{name}}">
+            </label>
+            {{#each scenarioList}}
+              <div class="scenario form" id="{{this.scenarioId}}">{{this.name}}
+                <ul>
+                  <li class="range form">
+                    <input type="checkbox" name="{{this.name}}-range0" id="{{this.scenarioId}}-range0">Range 0 ({{this.range0}})
+                  </li>
+                  <li class="range form">
+                    <input type="checkbox" name="{{this.name}}-range1" id="{{this.scenarioId}}-range1">Range 1 ({{this.range1}})
+                  </li>
+                  <li class="range form">
+                    <input type="checkbox" name="{{this.name}}-range2" id="{{this.scenarioId}}-range2">Range 2 ({{this.range2}})
+                  </li>
+                </ul>
+              </div>
+            {{/each}}
+          </div>
+          <div class="btn-group" role="group" aria-label="">
+            <button id="submit-button" data-scenario-id="{{scenarioID}}" class="btn btn-primary" type="button">submit</button>
+            <button id="bubbleplot-cancel-button" class="btn btn-primary" type="button">cancel</button>
+          </div>
+        </div>
     </script>
     <script id="model-modal" type="text/x-handlebars-template">
       <div class="modal fade" id="modelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">

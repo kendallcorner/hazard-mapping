@@ -47,8 +47,10 @@ function initController(EM) {
             listenToSiteContentPanel(EM);
         } else if (panel === "scenario-editor") {
             listenToScenarioEditor(EM);
+        } else if (panel === "bubbleplot-editor") {
+            listenToBubbleplotEditor(EM);
         } else {
-            console.err("No panel of the name ", panel);
+            throw new Error("No panel of the name ", panel);
         }
     });
 }
@@ -138,32 +140,67 @@ function listenToSiteEditor(EM) {
 function runDropdownMenu(event, EM) {
     const dropdownIdSplit = event.target.id.split("-");
     if (dropdownIdSplit.length === 3) {
-        const [ scenario, scenarioNum, menuFunction ] = dropdownIdSplit;
-        const scenarioId = scenario + "-" + scenarioNum;
-        switch(menuFunction) {
-            case "delete":
-                window.state.scenarioId = scenarioId;
-                EM.emit("delete-scenario");
-                break;
-            case "edit":
-                window.state.scenarioId = scenarioId;
-                window.state.panel = "scenario-editor";
-                EM.emit("change-panel");
-                break;
-            case "hide":
-                window.state.site.scenarioList[scenarioId].hidden = !window.state.site.scenarioList[scenarioId].hidden;
-                EM.emit("change-panel");
-                break;
-            case "hideRanges":
-                window.state.site.scenarioList[scenarioId].rangesHidden = !window.state.site.scenarioList[scenarioId].rangesHidden;
-                EM.emit("change-panel");
-                break;
-            default:
-                throw new Error("dropdown-scneario-menu-item menuFunction is not correct", menuFunction);
-        } 
+        const [ type, scenarioNum, menuFunction ] = dropdownIdSplit;
+        const id = type + "-" + scenarioNum;
+        if (type === "bubbleplot") {
+            switch(menuFunction) {
+                case "delete":
+                    window.state.mapItem = id;
+                    EM.emit("delete-siteItem");
+                    break;
+                case "edit":
+                    window.state.mapItem = id;
+                    window.state.panel = "bubbleplot-editor";
+                    EM.emit("change-panel");
+                    break;
+                case "hide":
+                    window.state.site.bubbleplotList[id].hidden = !window.state.site.bubbleplotList[id].hidden;
+                    EM.emit("change-panel");
+                    break;
+                default:
+                    throw new Error("dropdown-scenario-menu-item menuFunction is not correct", targetId);
+            }
+        } else if (type === "scenario") {
+            switch(menuFunction) {
+                case "delete":
+                    window.state.mapItem = id;
+                    EM.emit("delete-siteItem");
+                    break;
+                case "edit":
+                    window.state.mapItem = id;
+                    window.state.panel = "scenario-editor";
+                    EM.emit("change-panel");
+                    break;
+                case "hide":
+                    window.state.site.scenarioList[id].hidden = !window.state.site.scenarioList[id].hidden;
+                    EM.emit("change-panel");
+                    break;
+                case "hideRanges":
+                    window.state.site.scenarioList[id].rangesHidden = !window.state.site.scenarioList[id].rangesHidden;
+                    EM.emit("change-panel");
+                    break;
+                default:
+                    throw new Error("dropdown-scneario-menu-item menuFunction is not correct", targetId);
+            }
+        } else{
+            throw new Error("target Id on dropdown-scneario-menu-item is not correct", targetId);
+        }
     } else {
         throw new Error("target Id on dropdown-scneario-menu-item is not correct", targetId);
     }
+}
+
+/*
+ * Set up Scenario Editor listeners
+ */
+function listenToBubbleplotEditor(EM) {
+    getElementById("submit-button").addEventListener("click", () => {
+        EM.emit("create-bubbleplot");
+    });
+    getElementById("bubbleplot-cancel-button").addEventListener("click", () => {
+        state.panel = "site-content";
+        EM.emit("change-panel");
+    });
 }
 /*
  * Set up Scenario Editor listeners
@@ -172,7 +209,7 @@ function listenToScenarioEditor(EM) {
     const state = window.state;
     const eventListeners = placeLatLongListenerOnMap();
     getElementById("submit-button").addEventListener("click", () => {
-        EM.emit("create-edit-scenario", state.scenarioId);
+        EM.emit("create-edit-scenario", state.mapItem);
         removeLatLongListenerFromMap(eventListeners);
         if (state.searchMarker) state.searchMarker.setMap(null);
     });
@@ -189,9 +226,9 @@ function listenToScenarioEditor(EM) {
         getModelData("tnoModel");
     });
     // Make initial scenario marker
-    if (state.scenarioId) {
-        placeDraggableMarkerOnMap(state.site.scenarioList[state.scenarioId].latitude, 
-            state.site.scenarioList[state.scenarioId].longitude);
+    if (state.mapItem) {
+        placeDraggableMarkerOnMap(state.site.scenarioList[state.mapItem].latitude, 
+            state.site.scenarioList[state.mapItem].longitude);
     } else {
         placeDraggableMarkerOnMap(state.site.latitude, state.site.longitude);
     }
@@ -278,15 +315,27 @@ function listenToSiteContentPanel(EM) {
         window.state.panel = "scenario-editor";
         EM.emit("change-panel");
     });
+    getElementById("new-bubbleplot").addEventListener("click", () => {
+        window.state.panel = "bubbleplot-editor";
+        EM.emit("change-panel");
+    });
     getElementById("edit-site").addEventListener("click", () => {
         window.state.panel = "site-editor";
         EM.emit("change-panel");
     });
-    // TODO:
     getElementById("save-site").addEventListener("click", () => {
         saveSite(window.state.site);
     });
-
+    getElementById("hide-scenarios").addEventListener("click", () => {
+        for (const scenario of Object.values(window.state.site.scenarioList)) { scenario.hidden = true;}
+        window.state.panel = "site-content";
+        EM.emit("change-panel");
+    });
+    getElementById("hide-bubbleplots").addEventListener("click", () => {
+        for (const bubbleplot of Object.values(window.state.site.bubbleplotList)) { bubbleplot.hidden = true;}
+        window.state.panel = "site-content";
+        EM.emit("change-panel");
+    });
     function dropdownListener (event) {
         runDropdownMenu(event, EM);
     }
@@ -367,6 +416,7 @@ function addKeyboardFunctionality() {
       }
     }); 
 }
+
 },{"./views":4}],2:[function(require,module,exports){
 /*jshint esversion: 7 */
 const { initController } = require("./controller");
@@ -392,6 +442,7 @@ function setupModel(EM) {
         mapFeatures: {},
         scenarioCount: 0,
         scenarioId: null,
+        bubbleplotId: null,
         site: {
             name: "Home",
             latitude: 36.15911,
@@ -429,7 +480,7 @@ function setupModel(EM) {
             scenarioId = "scenario-" + state.scenarioCount;
             state.scenarioCount +=  1;
         }
-        state.scenarioId = scenarioId;
+        state.mapItem = scenarioId;
         try {
             state.site.scenarioList[scenarioId] = new Scenario({
                 name: getElementById('name').value,
@@ -450,21 +501,56 @@ function setupModel(EM) {
             return;
         }
         window.state.panel = "site-content";
-        window.state.scenarioId = null;
+        window.state.mapItem = null;
         EM.emit("change-panel");
     });
 
-    EM.on("delete-scenario", () => {
-        if(state.mapFeatures.scenarioList[state.scenarioId]) {
-        for (const featureKey in state.mapFeatures.scenarioList[state.scenarioId]) {
-            state.mapFeatures.scenarioList[state.scenarioId][featureKey].setMap(null);
+    EM.on("create-bubbleplot", (bubbleplotId) => {
+        if (!bubbleplotId) {
+            bubbleplotId = "bubbleplot-" + state.scenarioCount;
+            state.scenarioCount +=  1;
         }
-           delete state.site.scenarioList[state.scenarioId];
+        state.bubbleplotId = bubbleplotId;
+        let rangelist = {};
+        for (const scenario of Object.keys(state.site.scenarioList)) {
+            const range0check = getElementById(scenario + "-range0");
+            const range1check = getElementById(scenario + "-range1");
+            const range2check = getElementById(scenario + "-range2");
+            if (range0check || range1check || range2check) rangelist[scenario] = [];
+            if (range0check.checked) rangelist[scenario].push("range0");
+            if (range1check.checked) rangelist[scenario].push("range1");
+            if (range2check.checked) rangelist[scenario].push("range2");
+        }
+
+        try {
+            state.site.bubbleplotList[bubbleplotId] = new Bubbleplot({
+                name: getElementById('name').value,
+                bubbleplotId: bubbleplotId,
+                rangelist: rangelist
+            }); 
+        } catch (error) {
+            window.alert(error);
+            EM.emit("change-panel");
+            return;
+        }
+        window.state.panel = "site-content";
+        window.state.mapItem = null;
+        EM.emit("change-panel");
+    });
+
+    EM.on("delete-siteItem", () => {
+        if(state.site.scenarioList[state.mapItem]) {
+           delete state.site.scenarioList[state.mapItem];
            window.state.panel = "site-content";
-           window.state.scenarioId = null;
+           window.state.mapItem = null;
+           EM.emit("change-panel");
+         } else if (state.site.bubbleplotList[state.mapItem]) {
+           delete state.site.bubbleplotList[state.mapItem];
+           window.state.panel = "site-content";
+           window.state.mapItem = null;
            EM.emit("change-panel");
          } else {
-             throw new Error("No scenarioMarker exists for " + state.scenarioId);
+             throw new Error("No scenarioMarker exists for " + state.mapItem);
          }
     });
 
@@ -495,6 +581,27 @@ function Scenario (scenarioInputs) {
     return Object.assign(this, defaultValues, scenarioInputs);
 }
 
+function Bubbleplot (inputs) {
+    if (!inputs.name) throw new Error("Name is required");
+    if (!inputs.bubbleplotId) throw new Error("bubbleplotId is not being assigned");
+    if (inputs.rangelist === []) throw new Error("At least one range must be selected");
+
+    const defaultValues = {
+        hidden: false,
+        rangesHidden: false,
+    };
+
+    defaultValues.path = [];
+    for (const scenario of Object.keys(inputs.rangelist)) {
+        const location = window.state.site.scenarioList[scenario];
+        const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
+        for (const range of inputs.rangelist[scenario]) {
+            defaultValues.path.push(makeCirclePath(myLatLng, location[range]));
+        }
+    }
+    return Object.assign(this, defaultValues, inputs);
+}
+
 Scenario.prototype = {
      constructor: Scenario,
      update: function (newScenarioInput) { return Object.assign(this, newScenarioInput); }
@@ -507,11 +614,33 @@ function makeSite (overrides) {
     if (!overrides.longitude) throw new Error("Longitude is required (click to place on map)");
 
     const defaultValues = {
-        scenarioList: {}
+        scenarioList: {},
+        bubbleplotList: {}
     };
     overrides.latitude = Number(overrides.latitude).toFixed(5);
     overrides.longitude = Number(overrides.longitude).toFixed(5);
     return Object.assign(defaultValues, overrides);
+}
+
+function makeCirclePath(point, radius) { 
+    // https://stackoverflow.com/questions/23154254/google-map-multiple-overlay-no-cumulative-opacity
+    const d2r = Math.PI / 180;   // degrees to radians 
+    const r2d = 180 / Math.PI;   // radians to degrees 
+    const earthsradius = 6371000; // 3963 is the radius of the earth in meters
+    const points = 32; 
+
+    // find the raidus in lat/lon 
+    const rlat = (radius / earthsradius) * r2d; 
+    const rlng = rlat / Math.cos(point.lat() * d2r); 
+
+    const extp = [];
+    for (let i=0; i < points + 1; i++) {
+        const theta = Math.PI * (i / (points/2)); 
+        const ey = point.lng() + (rlng * Math.cos(theta)); // center a + radius x * cos(theta) 
+        const ex = point.lat() + (rlat * Math.sin(theta)); // center b + radius y * sin(theta) 
+        extp.push(new google.maps.LatLng(ex, ey));
+    }
+    return extp;
 }
 },{"./views":4}],4:[function(require,module,exports){
 /*jshint esversion: 7 */
@@ -535,9 +664,14 @@ function initViews(EM) {
             showSiteContentPanel(site, EM);
             mapSiteMarker(site);
             mapAll(window.state.site.scenarioList);
+            mapBubbleplots(window.state.site.bubbleplotList);
         } else if (panel === "scenario-editor") {
-            showScenarioPanel(window.state.scenarioId, EM);
+            showScenarioPanel(window.state.mapItem, EM);
             mapSiteMarker(site);
+        } else if (panel === "bubbleplot-editor") {
+            showBubbleplotPanel(window.state.mapItem, EM);
+            mapSiteMarker(site);
+            mapAll(window.state.site.scenarioList);
         } else {
             console.err("No panel of the name ", panel);
         }
@@ -606,6 +740,11 @@ function clearMap() {
             }
         }
     }
+    if(mapFeatures.bubbleplotList) { 
+        for (const mapFeature of Object.values(mapFeatures.bubbleplotList)) {
+            mapFeature.setMap(null);
+        }
+    }
     window.state.mapFeatures = {};
 }
 
@@ -652,6 +791,29 @@ function mapAll (scenarioList) {
             if (!hidden) {
                 mapScenario(scenarioId, scenario);
                 if(!rangesHidden) { mapHazardRanges(scenarioId, scenario); }
+            }
+        }
+    }
+}
+
+function mapBubbleplots (bubbleplotList) {
+    if (!window.state.mapFeatures) window.state.mapFeatures = {};
+    if (!window.state.mapFeatures.bubbleplotList) window.state.mapFeatures.bubbleplotList = {};
+
+    if (bubbleplotList && bubbleplotList != {}) {
+        const bubbleplots = Object.entries(bubbleplotList);
+        for (const [ bubbleplotId, bubbleplot ] of bubbleplots) {
+            const { hidden, name, path } = bubbleplot;
+            if (!hidden) {
+                const colors =  ["#F0F", "#F00", "#00F"];
+                window.state.mapFeatures.bubbleplotList[bubbleplotId] = new google.maps.Polygon({
+                    paths: path,
+                    strokeOpacity: 0,
+                    strokeWeight: 0,
+                    fillColor: "#F00",
+                    fillOpacity: 0.35
+                });
+                window.state.mapFeatures.bubbleplotList[bubbleplotId].setMap(window.state.map);
             }
         }
     }
@@ -751,6 +913,13 @@ function showScenarioPanel (scenarioId, EM) {
     }
 }
 
+/*
+ * Bring up bubbleplot editor panel
+ */
+function showBubbleplotPanel (scenarioId, EM) {
+    createHandlebarsViewFromTemplateId("navigator", "bubbleplot-panel", window.state.site);
+    EM.emit("panel-created");
+}
 
 },{"handlebars":34}],5:[function(require,module,exports){
 'use strict';

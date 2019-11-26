@@ -77,15 +77,15 @@ function setupModel(EM) {
             state.scenarioCount +=  1;
         }
         state.bubbleplotId = bubbleplotId;
-        let rangelist = [];
+        let rangelist = {};
         for (const scenario of Object.keys(state.site.scenarioList)) {
             const range0check = getElementById(scenario + "-range0");
             const range1check = getElementById(scenario + "-range1");
             const range2check = getElementById(scenario + "-range2");
             if (range0check || range1check || range2check) rangelist[scenario] = [];
-            if (range0check.checked) rangelist[scenario].push(range0check.id);
-            if (range1check.checked) rangelist[scenario].push(range1check.id);
-            if (range2check.checked) rangelist[scenario].push(range2check.id);
+            if (range0check.checked) rangelist[scenario].push("range0");
+            if (range1check.checked) rangelist[scenario].push("range1");
+            if (range2check.checked) rangelist[scenario].push("range2");
         }
 
         try {
@@ -156,6 +156,15 @@ function Bubbleplot (inputs) {
         hidden: false,
         rangesHidden: false,
     };
+
+    defaultValues.path = [];
+    for (const scenario of Object.keys(inputs.rangelist)) {
+        const location = window.state.site.scenarioList[scenario];
+        const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
+        for (const range of inputs.rangelist[scenario]) {
+            defaultValues.path.push(makeCirclePath(myLatLng, location[range]));
+        }
+    }
     return Object.assign(this, defaultValues, inputs);
 }
 
@@ -177,4 +186,25 @@ function makeSite (overrides) {
     overrides.latitude = Number(overrides.latitude).toFixed(5);
     overrides.longitude = Number(overrides.longitude).toFixed(5);
     return Object.assign(defaultValues, overrides);
+}
+
+function makeCirclePath(point, radius) { 
+    // https://stackoverflow.com/questions/23154254/google-map-multiple-overlay-no-cumulative-opacity
+    const d2r = Math.PI / 180;   // degrees to radians 
+    const r2d = 180 / Math.PI;   // radians to degrees 
+    const earthsradius = 6371000; // 3963 is the radius of the earth in meters
+    const points = 32; 
+
+    // find the raidus in lat/lon 
+    const rlat = (radius / earthsradius) * r2d; 
+    const rlng = rlat / Math.cos(point.lat() * d2r); 
+
+    const extp = [];
+    for (let i=0; i < points + 1; i++) {
+        const theta = Math.PI * (i / (points/2)); 
+        const ey = point.lng() + (rlng * Math.cos(theta)); // center a + radius x * cos(theta) 
+        const ex = point.lat() + (rlat * Math.sin(theta)); // center b + radius y * sin(theta) 
+        extp.push(new google.maps.LatLng(ex, ey));
+    }
+    return extp;
 }

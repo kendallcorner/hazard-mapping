@@ -322,11 +322,19 @@ function listenToSiteContentPanel(EM) {
         window.state.panel = "site-editor";
         EM.emit("change-panel");
     });
-    // TODO:
     getElementById("save-site").addEventListener("click", () => {
         saveSite(window.state.site);
     });
-
+    getElementById("hide-scenarios").addEventListener("click", () => {
+        for (const scenario of Object.values(window.state.site.scenarioList)) { scenario.hidden = true;}
+        window.state.panel = "site-content";
+        EM.emit("change-panel");
+    });
+    getElementById("hide-bubbleplots").addEventListener("click", () => {
+        for (const bubbleplot of Object.values(window.state.site.bubbleplotList)) { bubbleplot.hidden = true;}
+        window.state.panel = "site-content";
+        EM.emit("change-panel");
+    });
     function dropdownListener (event) {
         runDropdownMenu(event, EM);
     }

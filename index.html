@@ -109,7 +109,10 @@
               </li>
             {{/each}}
           </ul>
-          <button class="btn btn-primary" type="button" id="new-scenario">Add Scenario</button>
+          <div class="btn-group" role="group" aria-label="sumbit and cancel">
+            <button class="btn btn-primary" type="button" id="new-scenario">Add Scenario</button>
+            <button class="btn btn-primary" type="button" id="hide-scenarios">Hide all</button>
+          </div>
         </div>
         <div class="siteBubblePlots">
           <h2>Site Plots</h2>
@@ -136,7 +139,10 @@
               </li>
             {{/each}}
           </ul>
-          <button class="btn btn-primary" type="button" id="new-bubbleplot">Add Plot</button>
+          <div class="btn-group" role="group" aria-label="sumbit and cancel">
+            <button class="btn btn-primary" type="button" id="new-bubbleplot">Add Plot</button>
+            <button class="btn btn-primary" type="button" id="hide-bubbleplots">Hide all</button>
+          </div>
         </div>
     </script>
     <script id="scenario-panel" type="text/x-handlebars-template">

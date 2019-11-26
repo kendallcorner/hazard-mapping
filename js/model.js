@@ -88,17 +88,17 @@ function setupModel(EM) {
             if (range2check.checked) rangelist[scenario].push("range2");
         }
 
-        try {
+        // try {
             state.site.bubbleplotList[bubbleplotId] = new Bubbleplot({
                 name: getElementById('name').value,
                 bubbleplotId: bubbleplotId,
                 rangelist: rangelist
             }); 
-        } catch (error) {
-            window.alert(error);
-            EM.emit("change-panel");
-            return;
-        }
+        // } catch (error) {
+        //     window.alert(error);
+        //     EM.emit("change-panel");
+        //     return;
+        // // }
         window.state.panel = "site-content";
         window.state.mapItem = null;
         EM.emit("change-panel");
@@ -158,11 +158,24 @@ function Bubbleplot (inputs) {
     };
 
     defaultValues.path = [];
+    defaultValues.bounds = new window.googleAPI.maps.LatLngBounds();
+
     for (const scenario of Object.keys(inputs.rangelist)) {
         const location = window.state.site.scenarioList[scenario];
         const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
+
         for (const range of inputs.rangelist[scenario]) {
-            defaultValues.path.push(makeCirclePath(myLatLng, location[range]));
+            const circlePath = makeCirclePath(myLatLng, location[range]);
+            defaultValues.path.push(circlePath);
+            const lats = [];
+            const lngs = [];
+            for (const pair of circlePath) {
+                lats.push(pair.lat);
+                lngs.push(pair.lng);
+            }
+            const northEast = new window.googleAPI.maps.LatLng(Math.max(...lats), Math.max(...lngs));
+            const southWest = new window.googleAPI.maps.LatLng(Math.min(...lats), Math.min(...lngs));
+            defaultValues.bounds.union(new window.googleAPI.maps.LatLngBounds(southWest, northEast));
         }
     }
     return Object.assign(this, defaultValues, inputs);
@@ -192,19 +205,19 @@ function makeCirclePath(point, radius) {
     // https://stackoverflow.com/questions/23154254/google-map-multiple-overlay-no-cumulative-opacity
     const d2r = Math.PI / 180;   // degrees to radians 
     const r2d = 180 / Math.PI;   // radians to degrees 
-    const earthsradius = 6371000; // 3963 is the radius of the earth in meters
+    const earthsradius = 6367449; // radius of the earth in meters
     const points = 32; 
 
-    // find the raidus in lat/lon 
+    // find the raidus in lat/lon coordinates
     const rlat = (radius / earthsradius) * r2d; 
     const rlng = rlat / Math.cos(point.lat() * d2r); 
 
     const extp = [];
     for (let i=0; i < points + 1; i++) {
         const theta = Math.PI * (i / (points/2)); 
-        const ey = point.lng() + (rlng * Math.cos(theta)); // center a + radius x * cos(theta) 
-        const ex = point.lat() + (rlat * Math.sin(theta)); // center b + radius y * sin(theta) 
-        extp.push(new google.maps.LatLng(ex, ey));
+        const ex = point.lng() + (rlng * Math.cos(theta)); // center a + radius x * cos(theta) 
+        const ey = point.lat() + (rlat * Math.sin(theta)); // center b + radius y * sin(theta) 
+        extp.push({lat:ey, lng:ex});
     }
     return extp;
 }

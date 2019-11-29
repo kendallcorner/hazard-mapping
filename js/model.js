@@ -178,6 +178,9 @@ function Bubbleplot (inputs) {
             defaultValues.bounds.union(new window.googleAPI.maps.LatLngBounds(southWest, northEast));
         }
     }
+    const grid = gridify(defaultValues.bounds.getNorthEast(), defaultValues.bounds.getSouthWest());
+    defaultValues.bounds.extend(grid[1]);
+    defaultValues.bounds.extend(grid[0]);
     return Object.assign(this, defaultValues, inputs);
 }
 
@@ -202,22 +205,67 @@ function makeSite (overrides) {
 }
 
 function makeCirclePath(point, radius) { 
-    // https://stackoverflow.com/questions/23154254/google-map-multiple-overlay-no-cumulative-opacity
-    const d2r = Math.PI / 180;   // degrees to radians 
-    const r2d = 180 / Math.PI;   // radians to degrees 
-    const earthsradius = 6367449; // radius of the earth in meters
+    const lat = point.lat();
+    const lng = point.lng();
     const points = 32; 
-
-    // find the raidus in lat/lon coordinates
-    const rlat = (radius / earthsradius) * r2d; 
-    const rlng = rlat / Math.cos(point.lat() * d2r); 
-
-    const extp = [];
+    const circlePath = [];
     for (let i=0; i < points + 1; i++) {
-        const theta = Math.PI * (i / (points/2)); 
-        const ex = point.lng() + (rlng * Math.cos(theta)); // center a + radius x * cos(theta) 
-        const ey = point.lat() + (rlat * Math.sin(theta)); // center b + radius y * sin(theta) 
-        extp.push({lat:ey, lng:ex});
+        const theta = toDeg(2 * Math.PI / points * i); 
+        const newPoint = getNewLatLong(point, theta, radius);
+        circlePath.push(newPoint);
     }
-    return extp;
+
+    return circlePath;
+}
+
+function getNewLatLong (point, bering, distance) {
+    // bering: 0 is North, 90 is East, 180 is South, 270 is West
+   distance = distance / 6367449;  
+   bering = toRad(bering); 
+   const lat1 = toRad(point.lat());
+   const lon1 = toRad(point.lng());
+   const lat2 = Math.asin(Math.sin(lat1) * Math.cos(distance) + 
+                        Math.cos(lat1) * Math.sin(distance) * Math.cos(bering));
+   const lon2 = lon1 + Math.atan2(Math.sin(bering) * Math.sin(distance) *
+                                Math.cos(lat1), 
+                                Math.cos(distance) - Math.sin(lat1) *
+                                Math.sin(lat2));
+   if (isNaN(lat2) || isNaN(lon2)) return null;
+   return {lat: toDeg(lat2), lng: toDeg(lon2)};
+}
+
+function toRad (degrees) { return degrees * Math.PI / 180; }
+function toDeg (radians) { return radians * 180 / Math.PI; }
+
+function gridify(northEast, southWest) {
+    const lngLeft = southWest.lng();
+    const lngRight = northEast.lng();
+    const latTop = northEast.lat();
+    const latBottom = southWest.lat();
+    const TL = new window.googleAPI.maps.LatLng({lat: latTop, lng: lngLeft});
+    const TR = new window.googleAPI.maps.LatLng({lat: latTop, lng: lngRight});
+    const BL = new window.googleAPI.maps.LatLng({lat: latBottom, lng: lngLeft});
+    const distanceX = google.maps.geometry.spherical.computeDistanceBetween(TL, TR);
+    const distanceY = google.maps.geometry.spherical.computeDistanceBetween(TL, BL);
+
+    const gridSize = 10;
+
+    const gridNx = Math.ceil(distanceX/10);
+    const gridNy = Math.ceil(distanceY/10);
+
+    const moveX = gridNx*gridSize - distanceX;
+    const moveY = gridNy*gridSize - distanceY;
+    console.log(moveY, moveX);
+
+    const ne1 = new window.googleAPI.maps.LatLng(getNewLatLong(northEast, 90, moveX/2));
+    const ne2 = getNewLatLong(ne1, 0, moveY/2);
+    const sw1 = new window.googleAPI.maps.LatLng(getNewLatLong(southWest, 270, moveX/2));
+    const sw2 = getNewLatLong(sw1, 180, moveY/2);
+
+    return [ne2, sw2];
+    // for (let x = 0; x > gridNx; x++) {
+    //   for (let y = 0; y < gridNy; y++) {
+
+    //   }
+    // }
 }

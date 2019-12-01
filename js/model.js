@@ -78,7 +78,6 @@ function setupModel(EM) {
         }
         state.bubbleplotId = bubbleplotId;
         let rangelist = {};
-        const bubbleplotType = getElementById("bubbleplot-type").value;
         for (const scenario of Object.keys(state.site.scenarioList)) {
             const range0check = getElementById(scenario + "-range0");
             const range1check = getElementById(scenario + "-range1");
@@ -94,7 +93,8 @@ function setupModel(EM) {
                 name: getElementById('name').value,
                 bubbleplotId: bubbleplotId,
                 rangelist: rangelist,
-                bubbleplotType: bubbleplotType
+                bubbleplotType: getElementById("bubbleplot-type").value,
+                minThreshold: getElementById("min-threshold").value
             }); 
         // } catch (error) {
         //     window.alert(error);
@@ -153,6 +153,9 @@ function Bubbleplot (inputs) {
     if (!inputs.name) throw new Error("Name is required");
     if (!inputs.bubbleplotId) throw new Error("bubbleplotId is not being assigned");
     if (inputs.rangelist === []) throw new Error("At least one range must be selected");
+    if (inputs.bubbleplotType=="f-model" && inputs.minThreshold == "") { 
+        throw new Error("Minimum threshold is required for modeling type");
+    }
 
     const defaultValues = {
         hidden: false,
@@ -163,8 +166,11 @@ function Bubbleplot (inputs) {
     defaultValues.fMap = [];
     defaultValues.bounds = new window.googleAPI.maps.LatLngBounds();
 
-    if (inputs.bubbleplotType=="union") { 
-        [ defaultValues.path, defaultValues.bounds ] = makeUnionBubblePlot(inputs.rangelist); }
+    if (inputs.bubbleplotType=="union" || inputs.bubbleplotType=="f-input") { 
+        [ defaultValues.path, defaultValues.bounds ] = makeUnionBubblePlot(inputs.rangelist);
+    } else if (inputs.bubbleplotType=="f-model") {
+
+    } else { throw new Error('Incorrect bubbleplotType', bubbleplotType); }
 
     const grid = gridify(defaultValues.bounds.getNorthEast(), defaultValues.bounds.getSouthWest());
     defaultValues.bounds.extend(grid[1]);

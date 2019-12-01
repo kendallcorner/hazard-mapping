@@ -78,6 +78,7 @@ function setupModel(EM) {
         }
         state.bubbleplotId = bubbleplotId;
         let rangelist = {};
+        const bubbleplotType = getElementById("bubbleplot-type").value;
         for (const scenario of Object.keys(state.site.scenarioList)) {
             const range0check = getElementById(scenario + "-range0");
             const range1check = getElementById(scenario + "-range1");
@@ -92,7 +93,8 @@ function setupModel(EM) {
             state.site.bubbleplotList[bubbleplotId] = new Bubbleplot({
                 name: getElementById('name').value,
                 bubbleplotId: bubbleplotId,
-                rangelist: rangelist
+                rangelist: rangelist,
+                bubbleplotType: bubbleplotType
             }); 
         // } catch (error) {
         //     window.alert(error);
@@ -156,17 +158,32 @@ function Bubbleplot (inputs) {
         hidden: false,
         rangesHidden: false,
     };
-
+    // TODO: replace "defaultValues" with "calculatedValues"?
     defaultValues.path = [];
+    defaultValues.fMap = [];
     defaultValues.bounds = new window.googleAPI.maps.LatLngBounds();
 
-    for (const scenario of Object.keys(inputs.rangelist)) {
+    if (inputs.bubbleplotType=="union") { 
+        [ defaultValues.path, defaultValues.bounds ] = makeUnionBubblePlot(inputs.rangelist); }
+
+    const grid = gridify(defaultValues.bounds.getNorthEast(), defaultValues.bounds.getSouthWest());
+    defaultValues.bounds.extend(grid[1]);
+    defaultValues.bounds.extend(grid[0]);
+
+
+    return Object.assign(this, defaultValues, inputs);
+}
+
+function makeUnionBubblePlot(rangelist) {
+    const path = [];
+    const bounds = new window.googleAPI.maps.LatLngBounds();
+    for (const scenario of Object.keys(rangelist)) {
         const location = window.state.site.scenarioList[scenario];
         const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
 
-        for (const range of inputs.rangelist[scenario]) {
+        for (const range of rangelist[scenario]) {
             const circlePath = makeCirclePath(myLatLng, location[range]);
-            defaultValues.path.push(circlePath);
+            path.push(circlePath);
             const lats = [];
             const lngs = [];
             for (const pair of circlePath) {
@@ -175,15 +192,11 @@ function Bubbleplot (inputs) {
             }
             const northEast = new window.googleAPI.maps.LatLng(Math.max(...lats), Math.max(...lngs));
             const southWest = new window.googleAPI.maps.LatLng(Math.min(...lats), Math.min(...lngs));
-            defaultValues.bounds.union(new window.googleAPI.maps.LatLngBounds(southWest, northEast));
+            bounds.union(new window.googleAPI.maps.LatLngBounds(southWest, northEast));
         }
     }
-    const grid = gridify(defaultValues.bounds.getNorthEast(), defaultValues.bounds.getSouthWest());
-    defaultValues.bounds.extend(grid[1]);
-    defaultValues.bounds.extend(grid[0]);
-    return Object.assign(this, defaultValues, inputs);
+    return [path, bounds];
 }
-
 Scenario.prototype = {
      constructor: Scenario,
      update: function (newScenarioInput) { return Object.assign(this, newScenarioInput); }
@@ -262,10 +275,13 @@ function gridify(northEast, southWest) {
     const sw1 = new window.googleAPI.maps.LatLng(getNewLatLong(southWest, 270, moveX/2));
     const sw2 = getNewLatLong(sw1, 180, moveY/2);
 
-    return [ne2, sw2];
-    // for (let x = 0; x > gridNx; x++) {
-    //   for (let y = 0; y < gridNy; y++) {
+    console.log(gridNx, gridNy);
 
-    //   }
-    // }
+    for (let x = 0; x < gridNx; x++) {
+      for (let y = 0; y < gridNy; y++) {
+
+          //if (x%10===0 && y%10===0) { console.log(x, y); }
+      }
+    }
+    return [ne2, sw2];
 }

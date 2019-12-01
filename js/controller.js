@@ -193,6 +193,27 @@ function runDropdownMenu(event, EM) {
  * Set up Scenario Editor listeners
  */
 function listenToBubbleplotEditor(EM) {
+    document.addEventListener('input', function (event) {
+        if (event.target.id !== 'bubbleplot-type') return;
+        setBubbleplotCheckboxes(getElementById("bubbleplot-type"));
+    }, false);
+
+    function setBubbleplotCheckboxes(dropdown) {
+        console.log(dropdown.value);
+        const scenarioBoxes = document.getElementsByClassName("scenario");
+        const rangeBoxes = document.getElementsByClassName("range");
+        if (dropdown.value == "union" || dropdown.value == "f-input") {
+            for (const box of scenarioBoxes) { box.disabled = true; box.checked = false; }
+            for (const box of rangeBoxes) { box.disabled = false; }
+            getElementById("min-threshold").disabled =  true;
+        } else if (dropdown.value == "f-model") {
+            for (const box of rangeBoxes) { box.disabled = true; box.checked = false; }
+            for (const box of scenarioBoxes) { box.disabled = false; }
+            getElementById("min-threshold").disabled =  false;
+        } else {
+            throw new Error("not a valid dropdown value");
+        }
+    }
     getElementById("submit-button").addEventListener("click", () => {
         EM.emit("create-bubbleplot");
     });

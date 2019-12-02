@@ -59,7 +59,8 @@ function setupModel(EM) {
                 range1: getElementById('range-1').value,
                 frequency1: getElementById('frange-1').value,
                 range2: getElementById('range-2').value,
-                frequency2: getElementById('frange-2').value
+                frequency2: getElementById('frange-2').value,
+                model: state.currentModel
             }); 
         } catch (error) {
             window.alert(error);
@@ -130,6 +131,8 @@ function setupModel(EM) {
         throw new Error("Error Loading data: ", error);
     }
 
+    EM.on("get-model-info", () => { getModelData("tnoModel", state, EM); });
+
     return state;
 }
 
@@ -142,7 +145,8 @@ function Scenario (scenarioInputs) {
     const defaultValues = {
         material: null,
         hidden: false,
-        rangesHidden: false
+        rangesHidden: false,
+        model: {}
     };
     scenarioInputs.latitude = Number(scenarioInputs.latitude).toFixed(5);
     scenarioInputs.longitude = Number(scenarioInputs.longitude).toFixed(5);
@@ -290,4 +294,88 @@ function gridify(northEast, southWest) {
       }
     }
     return [ne2, sw2];
+}
+
+function getModelData(modelName, state, EM) {
+    const model = {};
+    model.name = modelName;
+    let tnoModel;
+    if (modelName == "tnoModel") {
+        model.metricEnglish = getElementById("metric-english-toggle").getAttribute("data");
+        model.tnoVolume = getElementById("tnoVolume").value;
+        model.tnoHeat = getElementById("tnoHeat").value;
+        model.tnoAtmPress = getElementById("tnoAtmPress").value;
+        model.tnoCurveSelect = getElementById("tnoCurveSelect").value;
+        model.tnoPressThresh = [
+            getElementById("tnoPressThresh1").value, 
+            getElementById("tnoPressThresh2").value, 
+            getElementById("tnoPressThresh3").value
+        ];
+
+        model.tnoPressThresh.sort((a, b) => {return b-a;});
+        tnoModel = new TNOmodel(model);
+    }
+
+    state.currentModel = tnoModel;
+    EM.emit("model-stored");
+}
+
+function TNOmodel (model) {
+    Object.assign(this, model);
+    this.table = window.state.tnoTable;
+    this.TNOmodelfromPressure =  (pressure) => {
+        const scaledP = (pressure/this.tnoAtmPress);
+        const curve = this.table[this.tnoCurveSelect];
+        const rbar = tableLookup(curve, scaledP);
+        console.log("rbar = " + rbar);
+        if (rbar) {
+            const r = rbar*(model.tnoHeat*1000*model.tnoVolume/(model.tnoAtmPress*100))**(1/3);
+            console.log(r);
+            return r;
+        } else { return false; }
+    };
+    this.TNOmodelFromPressArray = (arr) => {
+        this.distances = [];
+        for (const p of arr) {
+            try {
+                this.distances.push(this.TNOmodelfromPressure(p));
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        return this.distances;
+    };
+
+    const defaultValues = {
+        hidden: false,
+        rangesHidden: false,
+    };
+    return this;
+}
+
+function tableLookup(table, scaledPressure) {
+    if (scaledPressure > table.overpressure[0]) {
+        return false;
+    } else {
+        for (let i=0; i < table.overpressure.length; i++) {
+            if (scaledPressure > table.overpressure[i]) {
+                let interp = logInterpolateX (
+                    table.distance[i], 
+                    table.overpressure[i], 
+                    table.distance[i-1], 
+                    table.overpressure[i-1], 
+                    scaledPressure);
+                console.log(interp);
+                return interp;
+            }
+        }
+    }
+}
+
+function interpolate(x1, y1, x2, y2, x) { return y1+(y2-y1)*(x-x1)/(x2-x1); }
+function logInterpolateX(x1, y1, x2, y2, y) { 
+    // https://math.stackexchange.com/questions/1777303/interpolation-point-fitting-onto-a-logarithmic-line-segment
+    // https://en.wikipedia.org/wiki/Log%E2%80%93log_plot
+    const slope = Math.log(y2/y1)/Math.log(x2/x1);
+    return x1*(y/y1)**(1/slope); 
 }

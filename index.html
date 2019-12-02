@@ -254,26 +254,26 @@
               <div class="modal-body">
                 <div class="container-fluid">
                   <div class="row">
-                    <button class="btn btn-primary btn-long" id="metric-english-toggle" data="metric">Metric: Click for English</button>
+                    <button class="btn btn-primary btn-long" id="metric-english-toggle" data="{{metricEnglish}}">Metric: Click for English</button>
                   </div>
                   <div class="row">
                     <div class="col-md-6">
                       <label class="TNOform">Volume of Congested Area (<span id="tnoVolumeUnit">m^3</span>)</label>
                     </div>
                     <div class="col-md-6">
-                      <input class="TNOform" type="text" id="tnoVolume" value="1000">
+                      <input class="TNOform" type="text" id="tnoVolume" value="{{tnoVolume}}">
                     </div>
                     <div class="col-md-6">
                       <label class="TNOform">Heat of Combustion (<span id="tnoHocUnit">kJ/m^3</span>)</label>
                     </div>
                     <div class="col-md-6">
-                      <input class="TNOform" type="text" id="tnoHeat" value="3500">
+                      <input class="TNOform" type="text" id="tnoHeat" value="{{tnoHeat}}">
                     </div>
                     <div class="col-md-6">
                       <label class="TNOform">Atmospheric Pressure (<span class="tnoPressureUnit">mbar</span>)</label>
                     </div>
                     <div class="col-md-6">
-                      <input class="TNOform" type="text" id="tnoAtmPress" value="1013.25">
+                      <input class="TNOform" type="text" id="tnoAtmPress" value="{{tnoAtmPress}}">
                     </div>
                     <div class="col-md-6">
                       <select id="tnoCurveSelect">
@@ -284,9 +284,9 @@
                     <label class="TNOform">Overpressure Thresholds (<span class="tnoPressureUnit">mbar</span>)</label>
                   </div>
                   <div class="row">
-                    <input class="TNOform" type="text" id="tnoPressThresh1" value="50">
-                    <input class="TNOform" type="text" id="tnoPressThresh2" value="100">
-                    <input class="TNOform" type="text" id="tnoPressThresh3" value="500">
+                    <input class="TNOform" type="text" id="tnoPressThresh1" value="{{tnoPressThresh.[0]}}">
+                    <input class="TNOform" type="text" id="tnoPressThresh2" value="{{tnoPressThresh.[1]}}">
+                    <input class="TNOform" type="text" id="tnoPressThresh3" value="{{tnoPressThresh.[2]}}">
                   </div>
                   <div class="row">
                      <a href="https://processsafetyrelief.com/2019/11/22/TNO-model/" target="_blank">More information on TNO explosion curves and use of the model.</a>

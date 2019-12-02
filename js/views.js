@@ -209,7 +209,6 @@ function drawGoogleMapsCircle(latitude, longitude, radius, color) {
     return circle;
 }
 
-
 /*
  * Bring up site editor panel
  */
@@ -238,8 +237,9 @@ function showScenarioPanel (scenarioId, EM) {
         window.state.mapFeatures.scenarioList = {};
     const site = window.state.site;
     const scenario = setNewOrGetScenario(site);
+    const model = setNewOrGetModel(scenario);
     createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenario);
-    createHandlebarsViewFromTemplateId("modalDiv", "model-modal", scenario);
+    createHandlebarsViewFromTemplateId("modalDiv", "model-modal", model);
     // remove from current scenario from map
     if(window.state.mapFeatures.scenarioList[scenarioId]) { 
         window.state.mapFeatures.scenarioList[scenarioId].marker.setMap(null); 
@@ -251,6 +251,7 @@ function showScenarioPanel (scenarioId, EM) {
         option.text = optionText;
         dropdown.add(option);
     }
+    dropdown.options[5].selected = true;
 
     getElementById("name").select();
     EM.emit("panel-created");
@@ -264,6 +265,20 @@ function showScenarioPanel (scenarioId, EM) {
             };
         } else { 
             return site.scenarioList[scenarioId];
+        }
+    }
+
+    function setNewOrGetModel(scenario) {
+        if (!scenario.model) {
+            return {
+                metricEnglish: "metric",
+                tnoVolume: "1000",
+                tnoHeat: "3500",
+                tnoAtmPress: "1013.25",
+                tnoPressThresh: ["500", "100", "50"]
+            };
+        } else { 
+            return scenario.model;
         }
     }
 }

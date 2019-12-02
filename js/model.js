@@ -13,7 +13,7 @@ function setupModel(EM) {
             name: "Home",
             latitude: 36.15911,
             longitude: -95.99374,
-            zoom: 18
+            zoom: 18,
         },
         tnoTable: {}
     };
@@ -23,13 +23,20 @@ function setupModel(EM) {
      */
     EM.on("new-site-submitted", () => {
         try {
+            const latDelta = 0.001;
+            const lngDelta = 0.001;
+            const latitude = Number(getElementById('latitude').value);
+            const longitude = Number(getElementById('longitude').value);
             state.site = makeSite({
                 name:  getElementById('name').value,
-                latitude: Number(getElementById('latitude').value),
-                longitude: Number(getElementById('longitude').value),
-                zoom: 18
+                latitude,
+                longitude,
+                zoom: 18,
+                bounds: new window.googleAPI.maps.LatLngBounds(
+                    {lat: latitude - latDelta, lng: longitude - lngDelta},
+                    {lat: latitude + latDelta, lng: longitude + lngDelta} )
             });
-        } catch(error) {
+        } catch (error) {
             window.alert(error);
             EM.emit("change-panel");
             return;
@@ -90,13 +97,15 @@ function setupModel(EM) {
         }
 
         // try {
-            state.site.bubbleplotList[bubbleplotId] = new Bubbleplot({
+             const bubbleplot = new Bubbleplot({
                 name: getElementById('name').value,
                 bubbleplotId: bubbleplotId,
                 rangelist: rangelist,
                 bubbleplotType: getElementById("bubbleplot-type").value,
                 minThreshold: getElementById("min-threshold").value
             }); 
+            state.site.bounds.union(bubbleplot.bounds);
+            state.site.bubbleplotList[bubbleplotId] = bubbleplot;
         // } catch (error) {
         //     window.alert(error);
         //     EM.emit("change-panel");
@@ -175,6 +184,27 @@ function Bubbleplot (inputs) {
     } else if (inputs.bubbleplotType=="f-model") {
 
     } else { throw new Error('Incorrect bubbleplotType', bubbleplotType); }
+
+
+    // if (inputs.bubbleplotType=="union") {
+    //     [ defaultValues.path, defaultValues.bounds ] = 
+    //         makeUnionBubblePlot(inputs.rangelist);
+
+    // } else if (inputs.bubbleplotType=="f-input") { 
+    //     [ defaultValues.path, defaultValues.bounds ] = 
+    //         makeUnionBubblePlot(inputs.rangelist);
+    //     const grid = gridify(defaultValues.bounds.getNorthEast(), 
+    //         defaultValues.bounds.getSouthWest());
+    //     defaultValues.bounds.extend(grid[1]);
+    //     defaultValues.bounds.extend(grid[0]);
+    // } else if (inputs.bubbleplotType=="f-model") {
+    //     //find circles from minthreshold and add to path and bounds
+    //     const grid = gridify(defaultValues.bounds.getNorthEast(), 
+    //         defaultValues.bounds.getSouthWest());
+    //     defaultValues.bounds.extend(grid[1]);
+    //     defaultValues.bounds.extend(grid[0]);
+    // } else { throw new Error('Incorrect bubbleplotType', bubbleplotType); }
+
 
     const grid = gridify(defaultValues.bounds.getNorthEast(), defaultValues.bounds.getSouthWest());
     defaultValues.bounds.extend(grid[1]);

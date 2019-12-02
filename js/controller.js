@@ -24,6 +24,9 @@ function initController(EM) {
             if (request.status >= 200 && request.status < 400) {
                 const json = JSON.parse(request.responseText);
                 window.state.site = json;
+                window.state.site.bounds = new window.googleAPI.maps.LatLngBounds(
+                    {lat: window.state.site.bounds.south, lng: window.state.site.bounds.west},
+                    {lat: window.state.site.bounds.north, lng: window.state.site.bounds.east});
                 window.state.panel = "site-content";
                 EM.emit("change-panel");
             } else {

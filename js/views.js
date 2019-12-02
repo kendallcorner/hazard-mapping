@@ -111,6 +111,7 @@ function returnHome(location) {
     window.state.map.panTo(myLatLng);
     window.state.map.setTilt(0);
     window.state.map.setZoom(location.zoom);
+    // window.state.map.fitBounds(window.state.site.bounds);
 }
 
 /*
@@ -136,6 +137,7 @@ function mapSiteMarker (location) {
  * Maps all scenario markers and hazard range circles
  */
 function mapAll (scenarioList) {
+    window.state.map.fitBounds(window.state.site.bounds);
     if (!window.state.mapFeatures) window.state.mapFeatures = {};
     if (!window.state.mapFeatures.scenarioList) window.state.mapFeatures.scenarioList = {};
 

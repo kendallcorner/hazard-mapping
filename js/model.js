@@ -261,21 +261,37 @@ function toRad (degrees) { return degrees * Math.PI / 180; }
 function toDeg (radians) { return radians * 180 / Math.PI; }
 
 function gridify(northEast, southWest) {
+    const { distanceX, distanceY } = getDistanceXYLatLngSquare(northEast, southWest);
+
+    const gridSize = 10;
+    const gridNx = Math.ceil(distanceX/10);
+    const gridNy = Math.ceil(distanceY/10);
+    console.log(gridNx, gridNy);
+
+    for (let x = 0; x < gridNx; x++) {
+      for (let y = 0; y < gridNy; y++) {
+
+          //if (x%10===0 && y%10===0) { console.log(x, y); }
+      }
+    }
+    return centerNESWonGrid(gridNx, gridNy, gridSize, distanceX, distanceY, northEast, southWest);
+}
+
+function getDistanceXYLatLngSquare (northEast, southWest) {
     const lngLeft = southWest.lng();
     const lngRight = northEast.lng();
     const latTop = northEast.lat();
     const latBottom = southWest.lat();
-    const TL = new window.googleAPI.maps.LatLng({lat: latTop, lng: lngLeft});
-    const TR = new window.googleAPI.maps.LatLng({lat: latTop, lng: lngRight});
-    const BL = new window.googleAPI.maps.LatLng({lat: latBottom, lng: lngLeft});
-    const distanceX = google.maps.geometry.spherical.computeDistanceBetween(TL, TR);
-    const distanceY = google.maps.geometry.spherical.computeDistanceBetween(TL, BL);
+    const topLeft = new window.googleAPI.maps.LatLng({lat: latTop, lng: lngLeft});
+    const topRight = new window.googleAPI.maps.LatLng({lat: latTop, lng: lngRight});
+    const bottomLeft = new window.googleAPI.maps.LatLng({lat: latBottom, lng: lngLeft});
+    const distanceX = google.maps.geometry.spherical.computeDistanceBetween(topLeft, topRight);
+    const distanceY = google.maps.geometry.spherical.computeDistanceBetween(topLeft, bottomLeft);
 
-    const gridSize = 10;
+    return { distanceX, distanceY };
+}
 
-    const gridNx = Math.ceil(distanceX/10);
-    const gridNy = Math.ceil(distanceY/10);
-
+function centerNESWonGrid(gridNx, gridNy, gridSize, distanceX, distanceY, northEast, southWest) {
     const moveX = gridNx*gridSize - distanceX;
     const moveY = gridNy*gridSize - distanceY;
     console.log(moveY, moveX);
@@ -285,14 +301,6 @@ function gridify(northEast, southWest) {
     const sw1 = new window.googleAPI.maps.LatLng(getNewLatLong(southWest, 270, moveX/2));
     const sw2 = getNewLatLong(sw1, 180, moveY/2);
 
-    console.log(gridNx, gridNy);
-
-    for (let x = 0; x < gridNx; x++) {
-      for (let y = 0; y < gridNy; y++) {
-
-          //if (x%10===0 && y%10===0) { console.log(x, y); }
-      }
-    }
     return [ne2, sw2];
 }
 

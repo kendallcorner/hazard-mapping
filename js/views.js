@@ -192,7 +192,8 @@ function mapHazardRanges(scenarioId, scenario) {
     const { name, latitude, longitude } = scenario;
     const colors =  ["#F0F", "#F00", "#00F"];
     for (let i = 0; i < NUMRANGES; i++) {
-        window.state.mapFeatures.scenarioList[scenarioId]['range'+i] = drawGoogleMapsCircle(latitude, longitude, scenario["range" + i], colors[i]);
+        window.state.mapFeatures.scenarioList[scenarioId]['range'+i] = drawGoogleMapsCircle(
+            latitude, longitude, scenario["range" + i].range, colors[i]);
     }
 }
 

@@ -171,31 +171,31 @@
         <div class="form range-inputs">
           <div class="form range group">
             <label>Consequence 1 Range (m): 
-              <input type="text" id="range-0" value="{{range0}}">
+              <input type="text" id="range-0" value="{{range0.range}}">
             </label>
 
             <label>Frequency for Range 1: 
-              <input type="text" id="frange-0" value="{{frequency0}}">
+              <input type="text" id="frange-0" value="{{range0.frequency}}">
             </label>
           </div>
           
           <div class="form range group">
             <label>Consequence 2 Range (m): 
-              <input type="text" id="range-1" value="{{range1}}">
+              <input type="text" id="range-1" value="{{range1.range}}">
             </label>
 
             <label>Frequency for Range 2: 
-              <input type="text" id="frange-1" value="{{frequency1}}">
+              <input type="text" id="frange-1" value="{{range1.frequency}}">
             </label>
           </div>
           
           <div class="form range group">
             <label>Consequence 3 Range (m): 
-              <input type="text" id="range-2" value="{{range2}}">
+              <input type="text" id="range-2" value="{{range2.range}}">
             </label>
 
             <label>Frequency for Range 3: 
-              <input type="text" id="frange-2" value="{{frequency2}}">
+              <input type="text" id="frange-2" value="{{range2.frequency}}">
             </label>
           </div>
         </div>
@@ -222,13 +222,13 @@
               <div class="scenario form"><input type="checkbox" class="scenario" name="{{this.name}}" id="{{this.scenarioId}}" disabled>{{this.name}}
                 <ul>
                   <li class="range form">
-                    <input type="checkbox" class="range" name="{{this.name}}-range0" id="{{this.scenarioId}}-range0">Range 0 ({{this.range0}})
+                    <input type="checkbox" class="range" name="{{this.name}}-range0" id="{{this.scenarioId}}-range0">Range 0 ({{this.range0.range}})
                   </li>
                   <li class="range form">
-                    <input type="checkbox" class="range" name="{{this.name}}-range1" id="{{this.scenarioId}}-range1">Range 1 ({{this.range1}})
+                    <input type="checkbox" class="range" name="{{this.name}}-range1" id="{{this.scenarioId}}-range1">Range 1 ({{this.range1.range}})
                   </li>
                   <li class="range form">
-                    <input type="checkbox" class="range" name="{{this.name}}-range2" id="{{this.scenarioId}}-range2">Range 2 ({{this.range2}})
+                    <input type="checkbox" class="range" name="{{this.name}}-range2" id="{{this.scenarioId}}-range2">Range 2 ({{this.range2.range}})
                   </li>
                 </ul>
               </div>

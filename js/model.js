@@ -61,12 +61,18 @@ function setupModel(EM) {
                 material: getElementById('material').value,
                 latitude: Number(getElementById('latitude').value),
                 longitude: Number(getElementById('longitude').value),
-                range0: getElementById('range-0').value,
-                frequency0: getElementById('frange-0').value,
-                range1: getElementById('range-1').value,
-                frequency1: getElementById('frange-1').value,
-                range2: getElementById('range-2').value,
-                frequency2: getElementById('frange-2').value,
+                range0: {
+                    range: getElementById('range-0').value,
+                    frequency: getElementById('frange-0').value
+                },
+                range1: {
+                    range: getElementById('range-1').value,
+                    frequency: getElementById('frange-1').value
+                },
+                range2: {
+                    range: getElementById('range-2').value,
+                    frequency: getElementById('frange-2').value
+                },
                 model: state.currentModel
             }); 
         } catch (error) {
@@ -85,12 +91,15 @@ function setupModel(EM) {
             state.scenarioCount +=  1;
         }
         state.bubbleplotId = bubbleplotId;
-        let rangelist = {};
+        const rangelist = {};
+        const modellist = [];
         for (const scenario of Object.keys(state.site.scenarioList)) {
+            const scenarioCheck = getElementById(scenario);
             const range0check = getElementById(scenario + "-range0");
             const range1check = getElementById(scenario + "-range1");
             const range2check = getElementById(scenario + "-range2");
             if (range0check || range1check || range2check) rangelist[scenario] = [];
+            if (scenarioCheck.checked) modellist.push(scenario);
             if (range0check.checked) rangelist[scenario].push("range0");
             if (range1check.checked) rangelist[scenario].push("range1");
             if (range2check.checked) rangelist[scenario].push("range2");
@@ -100,7 +109,8 @@ function setupModel(EM) {
              const bubbleplot = new Bubbleplot({
                 name: getElementById('name').value,
                 bubbleplotId: bubbleplotId,
-                rangelist: rangelist,
+                rangelist,
+                modellist,
                 bubbleplotType: getElementById("bubbleplot-type").value,
                 minThreshold: getElementById("min-threshold").value
             }); 
@@ -174,44 +184,33 @@ function Bubbleplot (inputs) {
         hidden: false,
         rangesHidden: false,
     };
-    // TODO: replace "defaultValues" with "calculatedValues"?
-    defaultValues.path = [];
-    defaultValues.fMap = [];
-    defaultValues.bounds = new window.googleAPI.maps.LatLngBounds();
 
-    if (inputs.bubbleplotType=="union" || inputs.bubbleplotType=="f-input") { 
-        [ defaultValues.path, defaultValues.bounds ] = makeUnionBubblePlot(inputs.rangelist);
+    const bubbleplotData = {
+        path: [],
+        fMap: [],
+        bounds: new window.googleAPI.maps.LatLngBounds()
+    };
+
+    Object.assign(bubbleplotData, defaultValues, inputs);
+
+    if (inputs.bubbleplotType=="union") {
+        [ bubbleplotData.path, bubbleplotData.bounds ] = 
+            makeUnionBubblePlot(inputs.rangelist);
+
+    } else if (inputs.bubbleplotType=="f-input") { 
+        [ bubbleplotData.path, bubbleplotData.bounds ] = 
+            makeUnionBubblePlot(inputs.rangelist);
+        const grid = gridify(bubbleplotData);
+
     } else if (inputs.bubbleplotType=="f-model") {
+        //find circles from minthreshold and add to path and bounds
+        const grid = gridify(bubbleplotData);
+        bubbleplotData.bounds.extend(grid[1]);
+        bubbleplotData.bounds.extend(grid[0]);
 
     } else { throw new Error('Incorrect bubbleplotType', bubbleplotType); }
 
-
-    // if (inputs.bubbleplotType=="union") {
-    //     [ defaultValues.path, defaultValues.bounds ] = 
-    //         makeUnionBubblePlot(inputs.rangelist);
-
-    // } else if (inputs.bubbleplotType=="f-input") { 
-    //     [ defaultValues.path, defaultValues.bounds ] = 
-    //         makeUnionBubblePlot(inputs.rangelist);
-    //     const grid = gridify(defaultValues.bounds.getNorthEast(), 
-    //         defaultValues.bounds.getSouthWest());
-    //     defaultValues.bounds.extend(grid[1]);
-    //     defaultValues.bounds.extend(grid[0]);
-    // } else if (inputs.bubbleplotType=="f-model") {
-    //     //find circles from minthreshold and add to path and bounds
-    //     const grid = gridify(defaultValues.bounds.getNorthEast(), 
-    //         defaultValues.bounds.getSouthWest());
-    //     defaultValues.bounds.extend(grid[1]);
-    //     defaultValues.bounds.extend(grid[0]);
-    // } else { throw new Error('Incorrect bubbleplotType', bubbleplotType); }
-
-
-    const grid = gridify(defaultValues.bounds.getNorthEast(), defaultValues.bounds.getSouthWest());
-    defaultValues.bounds.extend(grid[1]);
-    defaultValues.bounds.extend(grid[0]);
-
-
-    return Object.assign(this, defaultValues, inputs);
+    return Object.assign(this, bubbleplotData);
 }
 
 function makeUnionBubblePlot(rangelist) {
@@ -222,7 +221,7 @@ function makeUnionBubblePlot(rangelist) {
         const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
 
         for (const range of rangelist[scenario]) {
-            const circlePath = makeCirclePath(myLatLng, location[range]);
+            const circlePath = makeCirclePath(myLatLng, location[range].range);
             path.push(circlePath);
             const lats = [];
             const lngs = [];
@@ -230,17 +229,16 @@ function makeUnionBubblePlot(rangelist) {
                 lats.push(pair.lat);
                 lngs.push(pair.lng);
             }
-            const northEast = new window.googleAPI.maps.LatLng(Math.max(...lats), Math.max(...lngs));
-            const southWest = new window.googleAPI.maps.LatLng(Math.min(...lats), Math.min(...lngs));
-            bounds.union(new window.googleAPI.maps.LatLngBounds(southWest, northEast));
+            bounds.union({
+                east: Math.max(...lngs), 
+                north: Math.max(...lats), 
+                south: Math.min(...lats), 
+                west: Math.min(...lngs)
+            });
         }
     }
     return [path, bounds];
 }
-Scenario.prototype = {
-     constructor: Scenario,
-     update: function (newScenarioInput) { return Object.assign(this, newScenarioInput); }
-};
 
 
 function makeSite (overrides) {
@@ -271,6 +269,77 @@ function makeCirclePath(point, radius) {
     return circlePath;
 }
 
+/*
+ * Converts lat lng to grid x and y
+ *       A             B
+ *        +---+---+---+
+ *        |   |   |   |
+ *        +---+---+---+
+ *        |   |   |   |
+ *        +---+---+---+
+ *        |   |   |   |
+ *        +---+---+---+
+ *       C             D
+ *   A: (x,y) = (0, gridNy*gridSize)
+ *      (lat, lng) = northEast.lat(), southWest.lng()
+ *   B: (x,y) = (gridNx*gridSize, gridNy*gridSize)
+ *      (lat, lng) = northEast.lat(), northEast.lng()
+ *   C: (x,y) = (0, 0)
+ *      (lat, lng) = southWest.lat(), southWest.lng()
+ */
+function latLngToGrid (lat, lng, grid) {
+    // interpolate(x1, y1, x2, y2, x)
+    // interpolating for x is along AB.
+    // interp_x is lng, interp_y is x
+    // x1 = A.lng y1 = A.x x2 = B.lng y2 = B.x
+    const x = interpolate(
+        grid.southWest.lng(),
+        0, 
+        northEast.lng(),
+        grid.gridNx*grid.gridSize,
+        lng
+    );
+    // interpolating for x is along AC.
+    // interp_x is lat, interp_y is y
+    // x1 = A.lat y1 = A.y x2 = C.lat y2 = C.y
+    const y = interpolate(
+        grid.northEast.lat(),
+        grid.gridNy*grid.gridSize,
+        southWest.lat(),
+        0,
+        lat
+    );
+    return [x, y];
+}
+/*
+ * Converts x, y grid coordinates to lat and lng
+ * see graphic for latLngToGrid above for line segment references
+ */
+function gridToLatLng (x, y, grid) {
+    // interpolate(x1, y1, x2, y2, x)
+    // interpolating for lat is along AC.
+    // interp_x is y, interp_y is lat
+    // x1 = A.y y1 = A.lat x2 = C.y y2 = C.lat
+    const lat = interpolate(
+        grid.gridNy*grid.gridSize,
+        grid.northWest.lat(),
+        0,
+        grid.southWest.lat(),
+        y
+    );
+    // interpolating for lng is along AB.
+    // interp_x is x, interp_y is lng
+    // x1 = A.x y1 = A.lng x2 = B.x y2 = B.lng
+    const lng = interpolate(
+        0,
+        southWest.lng(),
+        grid.gridNx*grid.gridSize,
+        northEast.lng(),
+        x
+    );
+    return[lat, lng];
+}
+
 function getNewLatLong (point, bering, distance) {
     // bering: 0 is North, 90 is East, 180 is South, 270 is West
    distance = distance / 6367449;  
@@ -290,21 +359,51 @@ function getNewLatLong (point, bering, distance) {
 function toRad (degrees) { return degrees * Math.PI / 180; }
 function toDeg (radians) { return radians * 180 / Math.PI; }
 
-function gridify(northEast, southWest) {
+function gridify(bubbleplotData) {
+    const northEast = bubbleplotData.bounds.getNorthEast();
+    const southWest = bubbleplotData.bounds.getSouthWest();
     const { distanceX, distanceY } = getDistanceXYLatLngSquare(northEast, southWest);
 
     const gridSize = 10;
     const gridNx = Math.ceil(distanceX/10);
     const gridNy = Math.ceil(distanceY/10);
     console.log(gridNx, gridNy);
+    const grid = {gridNx, gridNy, gridSize, northEast, southWest};
+
+    const [ newNorthEast, newSouthWest ] = centerNESWonGrid(grid, distanceX, distanceY);
+    grid.northEast = newNorthEast;
+    grid.southWest = newSouthWest;
+
+    const frequencyGrid = new Array(gridNx).fill(new Array(gridNy).fill(0));
+    // TODO: covert rangelist to rangelist (path list) with grid coordinates
+    // TODO: convert modellist to use grid coordinates
+    // TODO: graphic to explain that grid is centered on grid cells
 
     for (let x = 0; x < gridNx; x++) {
       for (let y = 0; y < gridNy; y++) {
+          if (x%10===0 && y%10===0) { console.log(x, y); }
+          //build frequency grid based on rangelist or modellist
+          let frequencySum = 0;
 
-          //if (x%10===0 && y%10===0) { console.log(x, y); }
+          if (bubbleplotType == "f-input") {
+              for (const scenarioId in bubbleplotData.rangelist) {
+                  for (const range of bubbleplotData[scenarioId]) {
+                      if (inCircle(x, y, range)) {
+                          frequencySum += window.state.site.scenarioList[scenarioId][range].frequency;
+                      }
+                  }
+              }
+          } else if (bubbleplotType == "f-model") {
+              for (const model in bubbleplotData.modellist) {
+                  const distance = gridSize*((x-model.lng)^2 + (y-model.lat)^2)^(1/2);
+                  const f = modelVulnerability(model(distance));
+                  frequencySum += f;
+              }
+          } else { throw new Error("bubbleplotType not correct for gridify: ", bubbleplotType); }
+          frequencyGrid[x][y] = frequencySum;
       }
     }
-    return centerNESWonGrid(gridNx, gridNy, gridSize, distanceX, distanceY, northEast, southWest);
+    return [ newNorthEast, newSouthWest ];
 }
 
 function getDistanceXYLatLngSquare (northEast, southWest) {
@@ -321,14 +420,14 @@ function getDistanceXYLatLngSquare (northEast, southWest) {
     return { distanceX, distanceY };
 }
 
-function centerNESWonGrid(gridNx, gridNy, gridSize, distanceX, distanceY, northEast, southWest) {
-    const moveX = gridNx*gridSize - distanceX;
-    const moveY = gridNy*gridSize - distanceY;
+function centerNESWonGrid(grid, distanceX, distanceY) {
+    const moveX = grid.gridNx*grid.gridSize - distanceX;
+    const moveY = grid.gridNy*grid.gridSize - distanceY;
     console.log(moveY, moveX);
 
-    const ne1 = new window.googleAPI.maps.LatLng(getNewLatLong(northEast, 90, moveX/2));
+    const ne1 = new window.googleAPI.maps.LatLng(getNewLatLong(grid.northEast, 90, moveX/2));
     const ne2 = getNewLatLong(ne1, 0, moveY/2);
-    const sw1 = new window.googleAPI.maps.LatLng(getNewLatLong(southWest, 270, moveX/2));
+    const sw1 = new window.googleAPI.maps.LatLng(getNewLatLong(grid.southWest, 270, moveX/2));
     const sw2 = getNewLatLong(sw1, 180, moveY/2);
 
     return [ne2, sw2];
@@ -410,7 +509,11 @@ function tableLookup(table, scaledPressure) {
     }
 }
 
-function interpolate(x1, y1, x2, y2, x) { return y1+(y2-y1)*(x-x1)/(x2-x1); }
+function interpolate(x1, y1, x2, y2, x) { 
+    // When solving for x, swap all xs and ys
+    return y1+(y2-y1)*(x-x1)/(x2-x1); 
+}
+
 function logInterpolateX(x1, y1, x2, y2, y) { 
     // https://math.stackexchange.com/questions/1777303/interpolation-point-fitting-onto-a-logarithmic-line-segment
     // https://en.wikipedia.org/wiki/Log%E2%80%93log_plot

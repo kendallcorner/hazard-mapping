@@ -1,6 +1,8 @@
 /*jshint esversion: 7 */
 const { getElementById } = require("./views");
 exports.setupModel = setupModel;
+exports.latLngToGrid = latLngToGrid;
+exports.gridToLatLng = gridToLatLng;
 
 function setupModel(EM) {
     const state = {
@@ -114,6 +116,7 @@ function setupModel(EM) {
                 bubbleplotType: getElementById("bubbleplot-type").value,
                 minThreshold: getElementById("min-threshold").value
             }); 
+            console.log(bubbleplot.bounds);
             state.site.bounds.union(bubbleplot.bounds);
             state.site.bubbleplotList[bubbleplotId] = bubbleplot;
         // } catch (error) {
@@ -200,17 +203,46 @@ function Bubbleplot (inputs) {
     } else if (inputs.bubbleplotType=="f-input") { 
         [ bubbleplotData.path, bubbleplotData.bounds ] = 
             makeUnionBubblePlot(inputs.rangelist);
-        const grid = gridify(bubbleplotData);
+        const [ newNorthEast, newSouthWest ] = 
+            makeFinputBubblePlot(bubbleplotData);
+        //     makeUnionBubblePlot(inputs.rangelist);
+        // const grid = gridify(bubbleplotData);
 
     } else if (inputs.bubbleplotType=="f-model") {
         //find circles from minthreshold and add to path and bounds
-        const grid = gridify(bubbleplotData);
-        bubbleplotData.bounds.extend(grid[1]);
-        bubbleplotData.bounds.extend(grid[0]);
+        [ bubbleplotData.path, bubbleplotData.bounds ] = 
+            makeFmodelBubblePlot(bubbleplotData);
 
     } else { throw new Error('Incorrect bubbleplotType', bubbleplotType); }
 
     return Object.assign(this, bubbleplotData);
+}
+
+function makeFinputBubblePlot(bubbleplotData) {
+    return gridify(bubbleplotData);
+}
+
+function latLngScenarioToGridScenarios(rangelist, grid) {
+    const gridScenarios = [];
+    for (const scenario of Object.keys(rangelist)) {
+        const [ gridX, gridY ] = latLngToGrid(window.state.site.scenarioList[scenario].latitude,
+            window.state.site.scenarioList[scenario].longitude, grid );
+        for (const range of rangelist[scenario]) {
+            console.log(range);
+            const radius = window.state.site.scenarioList[scenario][range].range;
+            console.log(radius);
+            const frequency = window.state.site.scenarioList[scenario][range].frequency;
+            gridScenarios.push({gridX, gridY, radius, frequency});
+        }
+    }
+    console.log(gridScenarios);
+    return gridScenarios;
+}
+
+function makeFmodelBubblePlot(rangelist) {
+    // const grid = gridify(bubbleplotData);
+    // bubbleplotData.bounds.extend(grid[1]);
+    // bubbleplotData.bounds.extend(grid[0]);
 }
 
 function makeUnionBubblePlot(rangelist) {
@@ -288,14 +320,16 @@ function makeCirclePath(point, radius) {
  *      (lat, lng) = southWest.lat(), southWest.lng()
  */
 function latLngToGrid (lat, lng, grid) {
+    console.log("latlngToGrid")
+    console.log(lat, lng, grid);
     // interpolate(x1, y1, x2, y2, x)
     // interpolating for x is along AB.
     // interp_x is lng, interp_y is x
     // x1 = A.lng y1 = A.x x2 = B.lng y2 = B.x
     const x = interpolate(
-        grid.southWest.lng(),
+        grid.southWest.lng,
         0, 
-        northEast.lng(),
+        grid.northEast.lng,
         grid.gridNx*grid.gridSize,
         lng
     );
@@ -303,12 +337,13 @@ function latLngToGrid (lat, lng, grid) {
     // interp_x is lat, interp_y is y
     // x1 = A.lat y1 = A.y x2 = C.lat y2 = C.y
     const y = interpolate(
-        grid.northEast.lat(),
+        grid.northEast.lat,
         grid.gridNy*grid.gridSize,
-        southWest.lat(),
+        grid.southWest.lat,
         0,
         lat
     );
+    console.log(x, y)
     return [x, y];
 }
 /*
@@ -334,7 +369,7 @@ function gridToLatLng (x, y, grid) {
         0,
         southWest.lng(),
         grid.gridNx*grid.gridSize,
-        northEast.lng(),
+        grid.northEast.lng(),
         x
     );
     return[lat, lng];
@@ -375,35 +410,45 @@ function gridify(bubbleplotData) {
     grid.southWest = newSouthWest;
 
     const frequencyGrid = new Array(gridNx).fill(new Array(gridNy).fill(0));
-    // TODO: covert rangelist to rangelist (path list) with grid coordinates
+    const gridScenarios = latLngScenarioToGridScenarios(bubbleplotData.rangelist, grid);
     // TODO: convert modellist to use grid coordinates
-    // TODO: graphic to explain that grid is centered on grid cells
+    // grid size is rounded up from area size and is centered on the available area
 
     for (let x = 0; x < gridNx; x++) {
       for (let y = 0; y < gridNy; y++) {
-          if (x%10===0 && y%10===0) { console.log(x, y); }
+          if (x%100===0 && y%100===0) { console.log(x, y); }
           //build frequency grid based on rangelist or modellist
           let frequencySum = 0;
 
-          if (bubbleplotType == "f-input") {
-              for (const scenarioId in bubbleplotData.rangelist) {
-                  for (const range of bubbleplotData[scenarioId]) {
-                      if (inCircle(x, y, range)) {
-                          frequencySum += window.state.site.scenarioList[scenarioId][range].frequency;
-                      }
+          if (bubbleplotData.bubbleplotType == "f-input") {
+              for (const gridScenario of gridScenarios) {
+                  if (inCircle(x*10, y*10, gridScenario)) {
+                      console.log(gridScenario.frequency)
+                      frequencySum += gridScenario.frequency;
                   }
               }
-          } else if (bubbleplotType == "f-model") {
+          } else if (bubbleplotData,bubbleplotType == "f-model") {
               for (const model in bubbleplotData.modellist) {
                   const distance = gridSize*((x-model.lng)^2 + (y-model.lat)^2)^(1/2);
                   const f = modelVulnerability(model(distance));
                   frequencySum += f;
               }
-          } else { throw new Error("bubbleplotType not correct for gridify: ", bubbleplotType); }
+          } else { throw new Error("bubbleplotType not correct for gridify: ", bubbleplotData.bubbleplotType); }
           frequencyGrid[x][y] = frequencySum;
       }
     }
+    console.log(frequencyGrid);
     return [ newNorthEast, newSouthWest ];
+}
+
+function inCircle(x, y, scenario){
+    // console.log(x, y, scenario)
+    const distance = Math.sqrt( (scenario.gridX - x)**2 + (scenario.gridY - y)**2 );
+    // console.log(distance)
+    if (distance < scenario.radius) {
+        return true;
+    }
+    return false;
 }
 
 function getDistanceXYLatLngSquare (northEast, southWest) {

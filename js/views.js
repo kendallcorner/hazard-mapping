@@ -160,17 +160,32 @@ function mapBubbleplots (bubbleplotList) {
     if (bubbleplotList && bubbleplotList != {}) {
         const bubbleplots = Object.entries(bubbleplotList);
         for (const [ bubbleplotId, bubbleplot ] of bubbleplots) {
-            const { hidden, name, path } = bubbleplot;
+            const { hidden, name, path, paths } = bubbleplot;
             if (!hidden) {
-                const colors =  ["#F0F", "#F00", "#00F"];
-                window.state.mapFeatures.bubbleplotList[bubbleplotId] = new google.maps.Polygon({
-                    paths: path,
-                    strokeOpacity: 0,
-                    strokeWeight: 0,
-                    fillColor: "#F00",
-                    fillOpacity: 0.35
-                });
-                window.state.mapFeatures.bubbleplotList[bubbleplotId].setMap(window.state.map);
+                if (path) {
+                    window.state.mapFeatures.bubbleplotList[bubbleplotId] = new google.maps.Polygon({
+                        paths: path,
+                        strokeOpacity: 1,
+                        strokeWeight: 1,
+                        strokeColor: "#F00"
+                    });
+                    window.state.mapFeatures.bubbleplotList[bubbleplotId].setMap(window.state.map);
+                }
+                if (paths) {
+                    const colors =  ["#F0F", "#F00", "#00F"];
+                    let index = 0;
+                    for (const thisPath of paths) {
+                        console.log("map: ", thisPath)
+                        window.state.mapFeatures.bubbleplotList[bubbleplotId][index] = new google.maps.Polygon({
+                            paths: thisPath,
+                            strokeOpacity: 1,
+                            strokeWeight: 1,
+                            strokeColor: "#F00"
+                        });
+                        window.state.mapFeatures.bubbleplotList[bubbleplotId][index].setMap(window.state.map);
+                        index += 1;
+                    }
+                }
             }
         }
     }

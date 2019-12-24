@@ -187,7 +187,7 @@ function Bubbleplot (inputs) {
     const defaultValues = {
         hidden: false,
         rangesHidden: false,
-        frequencyThresholds: [1, 0.1, 0.01]// [1e-4, 1e-5, 1e-6, 1e-7]
+        frequencyThresholds: [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 0.01, 0.1]
     };
 
     const bubbleplotData = {
@@ -226,9 +226,9 @@ function makeFinputBubblePlot(bubbleplotData) {
     return paths;
 }
 
-function frequencyPathsFromGrid(frequencyGrid) {
-    // body...
-}
+// function frequencyPathsFromGrid(frequencyGrid) {
+//     // body...
+// }
 
 function latLngScenarioToGridScenarios(rangelist, grid) {
     console.log("latLngScenarioToGridScenarios")
@@ -424,7 +424,7 @@ function gridify(bubbleplotData) {
             { length: gridNy }, () => 0
         )
     );
-    const thresholdContourPoints = [];
+    const latLngPaths = Array.from({ length: bubbleplotData.frequencyThresholds.length }, () => []);
     const gridScenarios = latLngScenarioToGridScenarios(bubbleplotData.rangelist, grid);
     // TODO: convert modellist to use grid coordinates
     // grid size is rounded up from area size and is centered on the available area
@@ -432,10 +432,22 @@ function gridify(bubbleplotData) {
     for (let x = 0; x < gridNx; x++) {
       for (let y = 0; y < gridNy; y++) {
           //build frequency grid based on rangelist or modellist
+          let frequencySum = 0;
           if (bubbleplotData.bubbleplotType == "f-input") {
               for (const gridScenario of gridScenarios) {
                   if (inCircle((x*gridSize+gridSize/2), (y*gridSize+gridSize/2), gridScenario)) {
-                      frequencyGrid[x][y] += parseFloat(gridScenario.frequency);
+                      frequencySum += parseFloat(gridScenario.frequency);
+                      // TODO: smaller circles shoudl subtract f of larger circles.
+                  }
+              }
+              if (frequencySum > 0) {
+                  for (let i = 0; i < bubbleplotData.frequencyThresholds.length; i++){
+                      const square = latLngSquareFromXY(x, y, grid);
+                      if (frequencySum >= bubbleplotData.frequencyThresholds[i]) {
+                          if (i == bubbleplotData.frequencyThresholds.length-1 || frequencySum < bubbleplotData.frequencyThresholds[i+1]){
+                              latLngPaths[i].push(square);
+                        }
+                      }
                   }
               }
           } else if (bubbleplotData,bubbleplotType == "f-model") {
@@ -444,35 +456,50 @@ function gridify(bubbleplotData) {
                   const f = modelVulnerability(model(distance));
                   frequencySum += f;
               }
+
           } else { 
               throw new Error(
                   "bubbleplotType not correct for gridify: ", 
                   bubbleplotData.bubbleplotType
               ); 
           }
-      }
+          frequencyGrid[x][y] += frequencySum;
+        }
     }
     console.log("frequencyGrid: ", frequencyGrid);
-    const paths = makeThresholdPaths(bubbleplotData.frequencyThresholds, gridSize, frequencyGrid);
-    console.log(paths)
-    const latLngPaths = makeLatLngPaths(paths, grid);
-    console.log(latLngPaths)
+    // const paths = makeThresholdPaths(bubbleplotData.frequencyThresholds, gridSize, frequencyGrid);
+    // console.log(paths)
+    // const latLngPaths = makeLatLngPaths(paths, grid);
+    // console.log(latLngPaths)
     return latLngPaths;
 }
 
-function makeLatLngPaths(paths, grid) {
-    const latLngPaths = [];
-    for (const path of paths) {
-        const latLngPath = [];
-        for (const point of path) {
-            const [lat, lng] = gridToLatLng(point.x, point.y, grid);
-            const latLngPoint = {lat, lng};
-            latLngPath.push(latLngPoint);
-        }
-        latLngPaths.push(latLngPath);
-    }
-    return latLngPaths;
+function latLngSquareFromXY(x, y, grid) {
+    const square = [];
+    let [ lat, lng ] = gridToLatLng(x*grid.gridSize, y*grid.gridSize, grid);
+    square.push({lat, lng});
+    [ lat, lng ] = gridToLatLng(x*grid.gridSize + grid.gridSize, y*grid.gridSize, grid);
+    square.push({lat, lng});
+    [ lat, lng ] = gridToLatLng(x*grid.gridSize + grid.gridSize, y*grid.gridSize + grid.gridSize, grid);
+    square.push({lat, lng});
+    [ lat, lng ] = gridToLatLng(x*grid.gridSize, y*grid.gridSize + grid.gridSize, grid);
+    square.push({lat, lng});
+    return square;
 }
+
+// function makeLatLngPaths(paths, grid) {
+//     const latLngPaths = [];
+//     for (const path of paths) {
+//         const latLngPath = [];
+//         for (const point of path) {
+//             const [lat, lng] = gridToLatLng(point.x, point.y, grid);
+//             const latLngPoint = {lat, lng};
+//             latLngPath.push(latLngPoint);
+//         }
+//         latLngPaths.push(latLngPath);
+//     }
+//     return latLngPaths;
+// }
 
 function inCircle(xCoord, yCoord, scenario){
     // console.log(xCoord, yCoord, scenario.gridX, scenario.gridY)

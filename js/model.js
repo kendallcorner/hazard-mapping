@@ -173,6 +173,11 @@ function Scenario (scenarioInputs) {
     };
     scenarioInputs.latitude = Number(scenarioInputs.latitude).toFixed(5);
     scenarioInputs.longitude = Number(scenarioInputs.longitude).toFixed(5);
+
+    // order ranges
+    const scenarioRanges = [scenarioInputs.range0, scenarioInputs.range1, scenarioInputs.range2];
+    scenarioRanges.sort((a, b) => {return a.range-b.range;});
+    for (let i = 0; i < 3; i++) { scenarioInputs["range" + i] = scenarioRanges[i]; }
     return Object.assign(this, defaultValues, scenarioInputs);
 }
 
@@ -233,14 +238,26 @@ function makeFinputBubblePlot(bubbleplotData) {
 function latLngScenarioToGridScenarios(rangelist, grid) {
     console.log("latLngScenarioToGridScenarios")
     const gridScenarios = [];
-    for (const scenario of Object.keys(rangelist)) {
-        const [ gridX, gridY ] = latLngToGrid(window.state.site.scenarioList[scenario].latitude,
-            window.state.site.scenarioList[scenario].longitude, grid );
-        for (const range of rangelist[scenario]) {
-            console.log(range);
-            const radius = window.state.site.scenarioList[scenario][range].range;
+    for (const scenarioName of Object.keys(rangelist)) {
+        const scenario = window.state.site.scenarioList[scenarioName];
+        const [ gridX, gridY ] = latLngToGrid(scenario.latitude,
+            scenario.longitude, grid );
+
+        const nRangesInScenario = rangelist[scenarioName].length;
+        for (let i = 0; i < nRangesInScenario; i++) {
+            const rangeName = rangelist[scenarioName][i];
+            //const range = rangelist[scenarioName][rangeName];
+            console.log(rangeName);
+            const radius = scenario[rangeName].range;
             console.log(radius);
-            const frequency = window.state.site.scenarioList[scenario][range].frequency;
+            let frequency = scenario[rangeName].frequency;
+            console.log(rangeName, "original freq: ", frequency)
+            for (let j = i + 1; j < nRangesInScenario; j++) { 
+                const jRangeName = rangelist[scenarioName][j];
+                frequency = frequency - scenario[jRangeName].frequency;
+                console.log(rangeName, " - ", jRangeName, " = ", frequency)
+            }
+            console.log(rangeName, frequency)
             gridScenarios.push({gridX, gridY, radius, frequency});
         }
     }

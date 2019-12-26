@@ -234,11 +234,16 @@ function listenToBubbleplotEditor(EM) {
  */
 function listenToScenarioEditor(EM) {
     const state = window.state;
-    const eventListeners = placeLatLongListenerOnMap();
+    let eventListeners = placeLatLongListenerOnMap();
     getElementById("submit-button").addEventListener("click", () => {
         EM.emit("create-edit-scenario", state.mapItem);
         removeLatLongListenerFromMap(eventListeners);
         if (state.searchMarker) state.searchMarker.setMap(null);
+        if (state.tempPath) {
+            for (const segment of state.tempPath) {
+                segment.setMap(null);
+            }
+        }
     });
     getElementById("scenario-cancel-button").addEventListener("click", () => {
         state.panel = "site-content";
@@ -252,6 +257,12 @@ function listenToScenarioEditor(EM) {
     getElementById("save-model").addEventListener("click", () => {
         EM.emit("get-model-info");
     });
+    document.addEventListener('input', function (event) {
+        if (event.target.id !== 'point-or-path') return;
+        removeLatLongListenerFromMap(eventListeners);
+        const path = getElementById("point-or-path").value === "pipeline";
+        eventListeners = placeLatLongListenerOnMap(path);
+    }, false);
     // Make initial scenario marker
     if (state.mapItem) {
         placeDraggableMarkerOnMap(state.site.scenarioList[state.mapItem].latitude, 
@@ -335,14 +346,25 @@ function saveSite(location) {
     }
 }
 
-function placeLatLongListenerOnMap() {
+function placeLatLongListenerOnMap(path) {
+    if (path){
+        return [ 
+            window.googleAPI.maps.event.addListener(
+                window.state.map, "click", event => { 
+                    latLongListener(event, path); 
+            })
+        ];
+    }
     return [
-        window.googleAPI.maps.event.addListener(window.state.map, "click", latLongListener),
-        window.googleAPI.maps.event.addListener(window.state.map, "click", (event) => {
-            placeDraggableMarkerOnMap(event.latLng.lat(), event.latLng.lng());
-        })
+        window.googleAPI.maps.event.addListener(
+            window.state.map, "click", event => { 
+                latLongListener(event, path); 
+            }),
+        window.googleAPI.maps.event.addListener(
+            window.state.map, "click", (event) => {
+                placeDraggableMarkerOnMap(event.latLng.lat(), event.latLng.lng());
+            })
     ];
-
 }
 
 function removeLatLongListenerFromMap(eventListeners) {
@@ -351,13 +373,44 @@ function removeLatLongListenerFromMap(eventListeners) {
     }
 }
 
-function latLongListener(event) {
-    setLatLongValues(event.latLng.lat(), event.latLng.lng());
+function latLongListener(event, path) {
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    if (window.state.panel === "site-editor") {
+        setLatLongValues(lat, lng);
+        return;
+    }
+    if (window.state.panel === "scenario-editor") {
+        if (path) {
+            window.state.savedPath.push({lat, lng});
+            drawPath(lat, lng);
+            return;
+        }
+        window.state.savedLat = lat;
+        window.state.savedLng = lng;
+        return;
+    }
 }
 
 function setLatLongValues(latitude, longitude) {
     getElementById("latitude").value = latitude.toFixed(5);
     getElementById("longitude").value = longitude.toFixed(5);
+}
+
+function drawPath(lat,lng) {
+    if (window.state.savedPath.length === 1) {
+        // TODO: mark starting point
+        return;
+    }
+    const pathSegment = new google.maps.Polyline({
+        path: window.state.savedPath,
+        geodesic: true,
+        strokeColor: '#FF0000',
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+    });
+    pathSegment.setMap(window.state.map);
+    window.state.tempPath.push(pathSegment);
 }
 
 function placeDraggableMarkerOnMap(latitude, longitude){

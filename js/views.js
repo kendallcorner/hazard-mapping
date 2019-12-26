@@ -192,9 +192,20 @@ function mapBubbleplots (bubbleplotList) {
 }
 
 function mapScenario (scenarioId, scenario) {
-    const { name, latitude, longitude } = scenario;
+    const { name, latitude, longitude, type, path } = scenario;
     const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
     window.state.mapFeatures.scenarioList[scenarioId] = {};
+    if (type === "pipeline") {
+        window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Polyline({
+            path: path,
+            geodesic: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            map: window.state.map
+        });
+        return;
+    }
     window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Marker({
         map: window.state.map,
         title: name,

@@ -18,7 +18,11 @@ function setupModel(EM) {
             longitude: -95.99374,
             zoom: 18,
         },
-        tnoTable: {}
+        tnoTable: {},
+        savedLat: null,
+        savedLng: null,
+        savedPath: [],
+        tempPath: []
     };
 
     /**
@@ -62,8 +66,10 @@ function setupModel(EM) {
                 name: getElementById('name').value,
                 scenarioId: scenarioId,
                 material: getElementById('material').value,
-                latitude: Number(getElementById('latitude').value),
-                longitude: Number(getElementById('longitude').value),
+                latitude: window.state.savedLat,
+                longitude: window.state.savedLng,
+                path: window.state.savedPath,
+                type: getElementById('point-or-path').value,
                 range0: {
                     range: getElementById('range-0').value,
                     frequency: getElementById('frange-0').value
@@ -83,6 +89,9 @@ function setupModel(EM) {
             EM.emit("change-panel");
             return;
         }
+        window.state.savedPath = [];
+        window.state.savedLat = null;
+        window.state.savedLng = null;
         window.state.panel = "site-content";
         window.state.mapItem = null;
         EM.emit("change-panel");
@@ -161,8 +170,8 @@ function setupModel(EM) {
 
 function Scenario (scenarioInputs) {
     if (!scenarioInputs.name) throw new Error("Name is required");
-    if (!scenarioInputs.latitude) throw new Error("Latitude is required (click to place on map)");    
-    if (!scenarioInputs.longitude) throw new Error("Longitude is required (click to place on map)");
+    if (!scenarioInputs.latitude && !scenarioInputs.path) throw new Error("Latitude is required (click to place on map)");    
+    if (!scenarioInputs.longitude && !scenarioInputs.path) throw new Error("Longitude is required (click to place on map)");
     if (!scenarioInputs.scenarioId) throw new Error("ScenarioId is not being assigned");
 
     const defaultValues = {
@@ -272,21 +281,33 @@ function makeFmodelBubblePlot(rangelist) {
 }
 
 function makeUnionBubblePlot(rangelist) {
-    const path = [];
+    let path = [];
     const bounds = new window.googleAPI.maps.LatLngBounds();
     for (const scenario of Object.keys(rangelist)) {
         const location = window.state.site.scenarioList[scenario];
-        const myLatLng = new window.googleAPI.maps.LatLng(location.latitude, location.longitude);
-
+        const myLatLng = {lat: location.latitude, lng: location.longitude};
         for (const range of rangelist[scenario]) {
-            const circlePath = makeCirclePath(myLatLng, location[range].range);
-            path.push(circlePath);
             const lats = [];
             const lngs = [];
-            for (const pair of circlePath) {
-                lats.push(pair.lat);
-                lngs.push(pair.lng);
+            let shapePath = [];
+            if (location.type === "pipeline") {
+                shapePath = makeCapsulePathSets(location.path, location[range].range);
+                path = path.concat(shapePath);
+                for (const shape of shapePath) {
+                    for (const pair of shape) {
+                        lats.push(pair.lat);
+                        lngs.push(pair.lng);
+                    }
+                }
+            } else {
+                shapePath = makeCirclePath(myLatLng, location[range].range);
+                path.push(shapePath);
+                for (const pair of shapePath) {
+                    lats.push(pair.lat);
+                    lngs.push(pair.lng);
+                }
             }
+            console.log(bounds, lats, lngs)
             bounds.union({
                 east: Math.max(...lngs), 
                 north: Math.max(...lats), 
@@ -314,8 +335,8 @@ function makeSite (overrides) {
 }
 
 function makeCirclePath(point, radius) { 
-    const lat = point.lat();
-    const lng = point.lng();
+    const lat = point.lat;
+    const lng = point.lng;
     const points = 32; 
     const circlePath = [];
     for (let i=0; i < points + 1; i++) {
@@ -323,8 +344,50 @@ function makeCirclePath(point, radius) {
         const newPoint = getNewLatLong(point, theta, radius);
         circlePath.push(newPoint);
     }
-
     return circlePath;
+}
+
+function getNewLatLong (point, bering, distance) {
+    // bering: 0 is North, 90 is West, 180 is South, 270 is East
+   distance = distance / 6367449;  
+   bering = toRad(bering); 
+   const lat1 = toRad(point.lat);
+   const lon1 = toRad(point.lng);
+   const lat2 = Math.asin(Math.sin(lat1) * Math.cos(distance) + 
+                        Math.cos(lat1) * Math.sin(distance) * Math.cos(bering));
+   const lon2 = lon1 + Math.atan2(Math.sin(bering) * Math.sin(distance) *
+                                Math.cos(lat1), 
+                                Math.cos(distance) - Math.sin(lat1) *
+                                Math.sin(lat2));
+   if (isNaN(lat2) || isNaN(lon2)) return null;
+   return {lat: toDeg(lat2), lng: toDeg(lon2)};
+}
+
+function toRad (degrees) { return degrees * Math.PI / 180; }
+function toDeg (radians) { return radians * 180 / Math.PI; }
+
+function makeCapsulePathSets(path, radius) {
+    console.log("makeCapsulePathSets", radius, path)
+    const capsulePathSet = [];
+    for (let i = 0; i < path.length; i ++) {
+        const point = path[i];
+        const circlePath = makeCirclePath(point, radius);
+        capsulePathSet.push(circlePath);
+        if ( i === path.length-1) {
+            continue;
+        }
+        const rectanglePath = [];
+        const nextPoint = path[i+1];
+        const theta = Math.atan((nextPoint.lat - point.lat)/(nextPoint.lng - point.lng))*180/Math.PI;
+        const R1 = getNewLatLong(nextPoint, (180 - theta), radius);
+        const R2 = getNewLatLong(nextPoint, (360 - theta), radius);
+        const R3 = getNewLatLong(point, (180 - theta), radius);
+        const R4 = getNewLatLong(point, (360 - theta), radius);
+        rectanglePath.push(R1, R2, R4, R3, R1);
+        capsulePathSet.push(rectanglePath) ;
+    }
+    console.log("capsulePathSet: ", capsulePathSet);
+    return capsulePathSet;
 }
 
 /*
@@ -400,25 +463,6 @@ function gridToLatLng (x, y, grid) {
     );
     return[lat, lng];
 }
-
-function getNewLatLong (point, bering, distance) {
-    // bering: 0 is North, 90 is East, 180 is South, 270 is West
-   distance = distance / 6367449;  
-   bering = toRad(bering); 
-   const lat1 = toRad(point.lat());
-   const lon1 = toRad(point.lng());
-   const lat2 = Math.asin(Math.sin(lat1) * Math.cos(distance) + 
-                        Math.cos(lat1) * Math.sin(distance) * Math.cos(bering));
-   const lon2 = lon1 + Math.atan2(Math.sin(bering) * Math.sin(distance) *
-                                Math.cos(lat1), 
-                                Math.cos(distance) - Math.sin(lat1) *
-                                Math.sin(lat2));
-   if (isNaN(lat2) || isNaN(lon2)) return null;
-   return {lat: toDeg(lat2), lng: toDeg(lon2)};
-}
-
-function toRad (degrees) { return degrees * Math.PI / 180; }
-function toDeg (radians) { return radians * 180 / Math.PI; }
 
 function gridify(bubbleplotData) {
     console.log("gridify")

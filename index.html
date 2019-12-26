@@ -157,13 +157,10 @@
             <input type="text" id="material" value="{{material}}" >
           </label>
           <div class="form latlong-group">
-            <label>Latitude*: 
-              <input type="text" id="latitude" value="{{latitude}}">
-            </label>
-
-            <label>Longitude*: 
-              <input type="text" id="longitude" value="{{longitude}}">
-            </label>
+            <select id="point-or-path">
+              <option value="equipment">Equipment (one point)</option>
+              <option value="pipeline">pipeline (path)</option>
+            </select>
           </div>
         </div>
         <button class="btn btn-primary btn-long" type="button" data-toggle="modal" data-target="#modelModal">Model Scenario</button>

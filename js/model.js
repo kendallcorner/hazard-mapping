@@ -249,13 +249,22 @@ function latLngScenarioToGridScenarios(rangelist, grid) {
     const gridScenarios = [];
     for (const scenarioName of Object.keys(rangelist)) {
         const scenario = window.state.site.scenarioList[scenarioName];
-        const [ gridX, gridY ] = latLngToGrid(scenario.latitude,
-            scenario.longitude, grid );
-
+        const { latitude, longitude, path, type } = scenario;
         const nRangesInScenario = rangelist[scenarioName].length;
+        const points = [];
+
+        if (type === "pipeline") {
+            for (const point of path) {
+                const [ gridX, gridY ] = latLngToGrid(point.lat, point.lng, grid);
+                points.push({gridX, gridY});
+            }
+        } else {
+            const [ gridX, gridY ] = latLngToGrid(latitude, longitude, grid);
+            points.push({gridX, gridY});
+        }
+
         for (let i = 0; i < nRangesInScenario; i++) {
             const rangeName = rangelist[scenarioName][i];
-            //const range = rangelist[scenarioName][rangeName];
             console.log(rangeName);
             const radius = scenario[rangeName].range;
             console.log(radius);
@@ -267,7 +276,7 @@ function latLngScenarioToGridScenarios(rangelist, grid) {
                 console.log(rangeName, " - ", jRangeName, " = ", frequency)
             }
             console.log(rangeName, frequency)
-            gridScenarios.push({gridX, gridY, radius, frequency});
+            gridScenarios.push({type, points, radius, frequency});
         }
     }
     console.log(gridScenarios);
@@ -466,8 +475,11 @@ function gridToLatLng (x, y, grid) {
 
 function gridify(bubbleplotData) {
     console.log("gridify")
-    const northEast = bubbleplotData.bounds.getNorthEast();
-    const southWest = bubbleplotData.bounds.getSouthWest();
+    console.log(bubbleplotData.bounds);
+    const northEast = { lat: bubbleplotData.bounds.getNorthEast().lat(), 
+                        lng: bubbleplotData.bounds.getNorthEast().lng() };
+    const southWest = { lat: bubbleplotData.bounds.getSouthWest().lat(), 
+                        lng: bubbleplotData.bounds.getSouthWest().lng() };
     const { distanceX, distanceY } = getDistanceXYLatLngSquare(northEast, southWest);
 
     const gridSize = 5;
@@ -496,9 +508,14 @@ function gridify(bubbleplotData) {
           let frequencySum = 0;
           if (bubbleplotData.bubbleplotType == "f-input") {
               for (const gridScenario of gridScenarios) {
-                  if (inCircle((x*gridSize+gridSize/2), (y*gridSize+gridSize/2), gridScenario)) {
+                  if (gridScenario.type === "pipeline") {
+                      if (inCapsule((x*gridSize+gridSize/2), (y*gridSize+gridSize/2), gridScenario)) {
+                          frequencySum += parseFloat(gridScenario.frequency);
+                      }
+                      continue;
+                  }
+                  if (inPointScenario((x*gridSize+gridSize/2), (y*gridSize+gridSize/2), gridScenario)) {
                       frequencySum += parseFloat(gridScenario.frequency);
-                      // TODO: smaller circles shoudl subtract f of larger circles.
                   }
               }
               if (frequencySum > 0) {
@@ -562,23 +579,56 @@ function latLngSquareFromXY(x, y, grid) {
 //     return latLngPaths;
 // }
 
-function inCircle(xCoord, yCoord, scenario){
-    // console.log(xCoord, yCoord, scenario.gridX, scenario.gridY)
-    const distance = Math.sqrt( (scenario.gridX - xCoord)**2 + 
-        (scenario.gridY - yCoord)**2 );
-    // console.log(distance, scenario.radius)
-    if (distance < scenario.radius) {
-        return true;
+function inPointScenario(xCoord, yCoord, scenario){
+    return inCircle(xCoord, yCoord, scenario.points[0].gridX, scenario.points[0].gridY, scenario.radius);
+}
+
+function inCircle(xCoord, yCoord, xCenter, yCenter, radius) {
+    const distance = Math.sqrt( (xCenter - xCoord)**2 + (yCenter - yCoord)**2 );
+    if (distance <= radius) return true;
+    return false;
+}
+
+function inCapsule(xCoord, yCoord, scenario){
+    const numPoints = scenario.points.length;
+    for (let i = 0; i < numPoints; i++) {
+        console.log(i, xCoord, yCoord, scenario.points[i])
+        if (i === numPoints-1) {
+            console.log(scenario.points[i].gridX, xCoord, scenario.points[i].gridY, yCoord)
+            return inCircle(xCoord, yCoord, scenario.points[i].gridX, scenario.points[i].gridY, scenario.radius);
+        }
+        const x1 = scenario.points[i].gridX;
+        const y1 = scenario.points[i].gridY;
+        const x2 = scenario.points[i+1].gridX;
+        const y2 = scenario.points[i+1].gridY;
+        console.log(x1, y1, x2, y2, xCoord, yCoord)
+
+        if ( (xCoord > Math.max(x1, x2) || xCoord < Math.min(x1, x2))
+                &&
+             (yCoord > Math.max(y1, y2) || yCoord < Math.min(y1, y2))
+            ) {
+            const point1 = inCircle(xCoord, yCoord, scenario.points[i].gridX, scenario.points[i].gridY, scenario.radius);
+            const point2 = inCircle(xCoord, yCoord, scenario.points[i+1].gridX, scenario.points[i+1].gridY, scenario.radius);
+            if (point1 || point2) return true;
+            continue;
+        } 
+        const distance = Math.abs( (y2 - y1) * xCoord - (x2 - x1) * yCoord +
+                                    x2 * y1 - y2 * x1 ) /
+                         Math.sqrt( (y2 - y1)**2 + (x2 - x1)**2 );  
+        console.log(distance, scenario.radius, distance <= scenario.radius) 
+        if (distance <= scenario.radius) {
+            return true;
+        }
     }
     return false;
 }
 
 function getDistanceXYLatLngSquare (northEast, southWest) {
     console.log("getDistanceXYLatLngSquare")
-    const lngLeft = southWest.lng();
-    const lngRight = northEast.lng();
-    const latTop = northEast.lat();
-    const latBottom = southWest.lat();
+    const lngLeft = southWest.lng;
+    const lngRight = northEast.lng;
+    const latTop = northEast.lat;
+    const latBottom = southWest.lat;
     const topLeft = new window.googleAPI.maps.LatLng({lat: latTop, lng: lngLeft});
     const topRight = new window.googleAPI.maps.LatLng({lat: latTop, lng: lngRight});
     const bottomLeft = new window.googleAPI.maps.LatLng({lat: latBottom, lng: lngLeft});
@@ -594,11 +644,11 @@ function centerNESWonGrid(grid, distanceX, distanceY) {
     const moveY = grid.gridNy*grid.gridSize - distanceY;
     console.log(moveY, moveX);
 
-    const ne1 = new window.googleAPI.maps.LatLng(getNewLatLong(grid.northEast, 90, moveX/2));
+    const ne1 = getNewLatLong(grid.northEast, 90, moveX/2);
     const ne2 = getNewLatLong(ne1, 0, moveY/2);
-    const sw1 = new window.googleAPI.maps.LatLng(getNewLatLong(grid.southWest, 270, moveX/2));
+    const sw1 = getNewLatLong(grid.southWest, 270, moveX/2);
     const sw2 = getNewLatLong(sw1, 180, moveY/2);
-
+    console.log(ne2, sw2);
     return [ne2, sw2];
 }
 

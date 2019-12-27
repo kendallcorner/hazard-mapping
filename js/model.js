@@ -62,15 +62,24 @@ function setupModel(EM) {
             state.site.scenarioCount +=  1;
         }
         state.mapItem = scenarioId;
+        const type = getElementById('point-or-path').value;
+        const { latitude, longitude, path } = getScenarioLocations(type, scenarioId);
+        function getScenarioLocations(type, scenarioId) {
+            if (type === "pipeline") {
+                return { latitude: null, longitude: null, path: window.state.savedPath};
+            }
+            return { latitude: window.state.savedLat, longitude: window.state.savedLng, path: null };
+        }
+
         try {
             state.site.scenarioList[scenarioId] = new Scenario({
                 name: getElementById('name').value,
                 scenarioId: scenarioId,
                 material: getElementById('material').value,
-                latitude: window.state.savedLat,
-                longitude: window.state.savedLng,
-                path: window.state.savedPath,
-                type: getElementById('point-or-path').value,
+                latitude,
+                longitude,
+                path,
+                type,
                 range0: {
                     range: getElementById('range-0').value,
                     frequency: getElementById('frange-0').value
@@ -127,7 +136,6 @@ function setupModel(EM) {
                 bubbleplotType: getElementById("bubbleplot-type").value,
                 minThreshold: getElementById("min-threshold").value
             }); 
-            console.log(bubbleplot.bounds);
             state.site.bounds.union(bubbleplot.bounds);
             state.site.bubbleplotList[bubbleplotId] = bubbleplot;
         // } catch (error) {
@@ -181,9 +189,8 @@ function Scenario (scenarioInputs) {
         rangesHidden: false,
         model: {}
     };
-    scenarioInputs.latitude = Number(scenarioInputs.latitude).toFixed(5);
-    scenarioInputs.longitude = Number(scenarioInputs.longitude).toFixed(5);
-
+    scenarioInputs.latitude = Number(scenarioInputs.latitude);
+    scenarioInputs.longitude = Number(scenarioInputs.longitude);
     // order ranges
     const scenarioRanges = [scenarioInputs.range0, scenarioInputs.range1, scenarioInputs.range2];
     scenarioRanges.sort((a, b) => {return a.range-b.range;});
@@ -266,21 +273,15 @@ function latLngScenarioToGridScenarios(rangelist, grid) {
 
         for (let i = 0; i < nRangesInScenario; i++) {
             const rangeName = rangelist[scenarioName][i];
-            console.log(rangeName);
             const radius = scenario[rangeName].range;
-            console.log(radius);
             let frequency = scenario[rangeName].frequency;
-            console.log(rangeName, "original freq: ", frequency)
             for (let j = i + 1; j < nRangesInScenario; j++) { 
                 const jRangeName = rangelist[scenarioName][j];
                 frequency = frequency - scenario[jRangeName].frequency;
-                console.log(rangeName, " - ", jRangeName, " = ", frequency)
             }
-            console.log(rangeName, frequency)
             gridScenarios.push({type, points, radius, frequency});
         }
     }
-    console.log(gridScenarios);
     return gridScenarios;
 }
 
@@ -300,8 +301,10 @@ function makeUnionBubblePlot(rangelist) {
             const lats = [];
             const lngs = [];
             let shapePath = [];
+            console.log(location.path, location[range].range)
             if (location.type === "pipeline") {
                 shapePath = makeCapsulePathSets(location.path, location[range].range);
+                console.log(shapePath)
                 path = path.concat(shapePath);
                 for (const shape of shapePath) {
                     for (const pair of shape) {
@@ -317,7 +320,6 @@ function makeUnionBubblePlot(rangelist) {
                     lngs.push(pair.lng);
                 }
             }
-            console.log(bounds, lats, lngs)
             bounds.union({
                 east: Math.max(...lngs), 
                 north: Math.max(...lats), 
@@ -377,7 +379,7 @@ function toRad (degrees) { return degrees * Math.PI / 180; }
 function toDeg (radians) { return radians * 180 / Math.PI; }
 
 function makeCapsulePathSets(path, radius) {
-    console.log("makeCapsulePathSets", radius, path)
+    console.log("makeCapsulePathSets")
     const capsulePathSet = [];
     for (let i = 0; i < path.length; i ++) {
         const point = path[i];
@@ -389,6 +391,7 @@ function makeCapsulePathSets(path, radius) {
         const rectanglePath = [];
         const nextPoint = path[i+1];
         const theta = Math.atan((nextPoint.lat - point.lat)/(nextPoint.lng - point.lng))*180/Math.PI;
+        if (!theta) continue;
         const R1 = getNewLatLong(nextPoint, (180 - theta), radius);
         const R2 = getNewLatLong(nextPoint, (360 - theta), radius);
         const R3 = getNewLatLong(point, (180 - theta), radius);
@@ -396,7 +399,6 @@ function makeCapsulePathSets(path, radius) {
         rectanglePath.push(R1, R2, R4, R3, R1);
         capsulePathSet.push(rectanglePath) ;
     }
-    console.log("capsulePathSet: ", capsulePathSet);
     return capsulePathSet;
 }
 
@@ -420,7 +422,6 @@ function makeCapsulePathSets(path, radius) {
  */
 function latLngToGrid (lat, lng, grid) {
     console.log("latlngToGrid")
-    console.log(lat, lng, grid);
     // interpolate(x1, y1, x2, y2, x)
     // interpolating for x is along AB.
     // interp_x is lng, interp_y is x
@@ -442,7 +443,6 @@ function latLngToGrid (lat, lng, grid) {
         0,
         lat
     );
-    console.log(x, y)
     return [x, y];
 }
 /*
@@ -476,7 +476,6 @@ function gridToLatLng (x, y, grid) {
 
 function gridify(bubbleplotData) {
     console.log("gridify")
-    console.log(bubbleplotData.bounds);
     const northEast = { lat: bubbleplotData.bounds.getNorthEast().lat(), 
                         lng: bubbleplotData.bounds.getNorthEast().lng() };
     const southWest = { lat: bubbleplotData.bounds.getSouthWest().lat(), 
@@ -486,7 +485,6 @@ function gridify(bubbleplotData) {
     const gridSize = 5;
     const gridNx = Math.ceil(distanceX/gridSize);
     const gridNy = Math.ceil(distanceY/gridSize);
-    console.log("gridify: ", gridNx, gridNy);
     const grid = {gridNx, gridNy, gridSize, northEast, southWest};
 
     const [ newNorthEast, newSouthWest ] = centerNESWonGrid(grid, distanceX, distanceY);
@@ -510,7 +508,7 @@ function gridify(bubbleplotData) {
           if (bubbleplotData.bubbleplotType == "f-input") {
               for (const gridScenario of gridScenarios) {
                   if (gridScenario.type === "pipeline") {
-                      if (inCapsule((x*gridSize+gridSize/2), (y*gridSize+gridSize/2), gridScenario)) {
+                      if (inCapsule((x*gridSize+gridSize/2), (y*gridSize+gridSize/2), gridScenario, gridSize)) {
                           frequencySum += parseFloat(gridScenario.frequency);
                       }
                       continue;
@@ -545,11 +543,6 @@ function gridify(bubbleplotData) {
           frequencyGrid[x][y] += frequencySum;
         }
     }
-    console.log("frequencyGrid: ", frequencyGrid);
-    // const paths = makeThresholdPaths(bubbleplotData.frequencyThresholds, gridSize, frequencyGrid);
-    // console.log(paths)
-    // const latLngPaths = makeLatLngPaths(paths, grid);
-    // console.log(latLngPaths)
     return latLngPaths;
 }
 
@@ -566,20 +559,6 @@ function latLngSquareFromXY(x, y, grid) {
     return square;
 }
 
-// function makeLatLngPaths(paths, grid) {
-//     const latLngPaths = [];
-//     for (const path of paths) {
-//         const latLngPath = [];
-//         for (const point of path) {
-//             const [lat, lng] = gridToLatLng(point.x, point.y, grid);
-//             const latLngPoint = {lat, lng};
-//             latLngPath.push(latLngPoint);
-//         }
-//         latLngPaths.push(latLngPath);
-//     }
-//     return latLngPaths;
-// }
-
 function inPointScenario(xCoord, yCoord, scenario){
     return inCircle(xCoord, yCoord, scenario.points[0].gridX, scenario.points[0].gridY, scenario.radius);
 }
@@ -590,33 +569,37 @@ function inCircle(xCoord, yCoord, xCenter, yCenter, radius) {
     return false;
 }
 
-function inCapsule(xCoord, yCoord, scenario){
+function inCapsule(xCoord, yCoord, scenario, gridSize){
     const numPoints = scenario.points.length;
     for (let i = 0; i < numPoints; i++) {
-        console.log(i, xCoord, yCoord, scenario.points[i])
         if (i === numPoints-1) {
-            console.log(scenario.points[i].gridX, xCoord, scenario.points[i].gridY, yCoord)
             return inCircle(xCoord, yCoord, scenario.points[i].gridX, scenario.points[i].gridY, scenario.radius);
         }
         const x1 = scenario.points[i].gridX;
         const y1 = scenario.points[i].gridY;
         const x2 = scenario.points[i+1].gridX;
         const y2 = scenario.points[i+1].gridY;
-        console.log(x1, y1, x2, y2, xCoord, yCoord)
+        const maxx = Math.max(x1, x2);
+        const minx = Math.min(x1, x2);
+        const maxy = Math.max(y1, y2);
+        const miny = Math.min(y1, y2);
 
-        if ( (xCoord > Math.max(x1, x2) || xCoord < Math.min(x1, x2))
-                &&
-             (yCoord > Math.max(y1, y2) || yCoord < Math.min(y1, y2))
-            ) {
-            const point1 = inCircle(xCoord, yCoord, scenario.points[i].gridX, scenario.points[i].gridY, scenario.radius);
-            const point2 = inCircle(xCoord, yCoord, scenario.points[i+1].gridX, scenario.points[i+1].gridY, scenario.radius);
+        if (xCoord > maxx + scenario.radius) continue;
+        if (xCoord < minx - scenario.radius) continue;
+        if (yCoord > maxy + scenario.radius) continue;
+        if (yCoord < miny - scenario.radius) continue;
+
+        if ( (xCoord > maxx || xCoord < minx)  && (yCoord > maxy || yCoord < miny) ) {
+            const point1 = inCircle(xCoord, yCoord, scenario.points[i].gridX, 
+                                    scenario.points[i].gridY, scenario.radius);
+            const point2 = inCircle(xCoord, yCoord, scenario.points[i+1].gridX, 
+                                    scenario.points[i+1].gridY, scenario.radius);
             if (point1 || point2) return true;
             continue;
         } 
         const distance = Math.abs( (y2 - y1) * xCoord - (x2 - x1) * yCoord +
                                     x2 * y1 - y2 * x1 ) /
                          Math.sqrt( (y2 - y1)**2 + (x2 - x1)**2 );  
-        console.log(distance, scenario.radius, distance <= scenario.radius) 
         if (distance <= scenario.radius) {
             return true;
         }
@@ -643,13 +626,11 @@ function centerNESWonGrid(grid, distanceX, distanceY) {
     console.log("centerNESWonGrid")
     const moveX = grid.gridNx*grid.gridSize - distanceX;
     const moveY = grid.gridNy*grid.gridSize - distanceY;
-    console.log(moveY, moveX);
 
     const ne1 = getNewLatLong(grid.northEast, 90, moveX/2);
     const ne2 = getNewLatLong(ne1, 0, moveY/2);
     const sw1 = getNewLatLong(grid.southWest, 270, moveX/2);
     const sw2 = getNewLatLong(sw1, 180, moveY/2);
-    console.log(ne2, sw2);
     return [ne2, sw2];
 }
 
@@ -684,10 +665,8 @@ function TNOmodel (model) {
         const scaledP = (pressure/this.tnoAtmPress);
         const curve = this.table[this.tnoCurveSelect];
         const rbar = tableLookup(curve, scaledP);
-        console.log("rbar = " + rbar);
         if (rbar) {
             const r = rbar*(model.tnoHeat*1000*model.tnoVolume/(model.tnoAtmPress*100))**(1/3);
-            console.log(r);
             return r;
         } else { return false; }
     };
@@ -697,7 +676,6 @@ function TNOmodel (model) {
             try {
                 this.distances.push(this.TNOmodelfromPressure(p));
             } catch (error) {
-                console.log(error);
             }
         }
         return this.distances;
@@ -722,7 +700,6 @@ function tableLookup(table, scaledPressure) {
                     table.distance[i-1], 
                     table.overpressure[i-1], 
                     scaledPressure);
-                console.log(interp);
                 return interp;
             }
         }

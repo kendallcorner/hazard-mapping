@@ -16,7 +16,6 @@ function initController(EM) {
     loadButton.addEventListener('change', ()=> {
         //loads existing JSON file as a location.
         const fileURL = window.URL.createObjectURL(loadButton.files[0]);
-        console.log(fileURL);
         //https://stackoverflow.com/questions/35294633/what-is-the-vanilla-js-version-of-jquerys-getjson#answers
         const request = new XMLHttpRequest();
         request.open('GET', fileURL, true);
@@ -206,7 +205,6 @@ function listenToBubbleplotEditor(EM) {
     }, false);
 
     function setBubbleplotCheckboxes(dropdown) {
-        console.log(dropdown.value);
         const scenarioBoxes = document.getElementsByClassName("scenario");
         const rangeBoxes = document.getElementsByClassName("range");
         if (dropdown.value == "union" || dropdown.value == "f-input") {
@@ -241,7 +239,7 @@ function listenToScenarioEditor(EM) {
         if (state.searchMarker) state.searchMarker.setMap(null);
         if (state.tempPath) {
             for (const segment of state.tempPath) {
-                segment.setMap(null);
+                try { segment.setMap(null); } catch (e) {}
             }
         }
     });
@@ -260,6 +258,7 @@ function listenToScenarioEditor(EM) {
     document.addEventListener('input', function (event) {
         if (event.target.id !== 'point-or-path') return;
         removeLatLongListenerFromMap(eventListeners);
+        if (window.state.searchMarker) window.state.searchMarker.setMap(null);
         const path = getElementById("point-or-path").value === "pipeline";
         eventListeners = placeLatLongListenerOnMap(path);
     }, false);
@@ -267,8 +266,12 @@ function listenToScenarioEditor(EM) {
     if (state.mapItem) {
         placeDraggableMarkerOnMap(state.site.scenarioList[state.mapItem].latitude, 
             state.site.scenarioList[state.mapItem].longitude);
+        window.state.savedLat = state.site.scenarioList[state.mapItem].latitude;
+        window.state.savedLng = state.site.scenarioList[state.mapItem].longitude;
     } else {
         placeDraggableMarkerOnMap(state.site.latitude, state.site.longitude);
+        window.state.savedLat = state.site.latitude;
+        window.state.savedLng = state.site.longitude;
     }
     addKeyboardFunctionality();
 }

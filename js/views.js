@@ -125,12 +125,12 @@ function mapSiteMarker (location) {
     window.state.map.setZoom(18);
     createHandlebarsViewFromTemplate("title", "<h1>Site: {{name}} </h1>", location);
     if (window.state.mapFeatures.siteMarker) window.state.mapFeatures.siteMarker.setMap(null);
-    window.state.mapFeatures.siteMarker = new window.googleAPI.maps.Marker({
-        map: window.state.map,
-        title: location.name,
-        position: myLatLng,
-        icon: "assets/sitePin.png"
-    });
+    // window.state.mapFeatures.siteMarker = new window.googleAPI.maps.Marker({
+    //     map: window.state.map,
+    //     title: location.name,
+    //     position: myLatLng,
+    //     icon: "assets/sitePin.png"
+    // });
 }
 
 /*
@@ -196,16 +196,10 @@ function mapScenario (scenarioId, scenario) {
     const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
     window.state.mapFeatures.scenarioList[scenarioId] = {};
     if (type === "pipeline") {
-        window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Polyline({
-            path: path,
-            geodesic: true,
-            strokeColor: '#FF0000',
-            strokeOpacity: 1.0,
-            strokeWeight: 2,
-            map: window.state.map
-        });
+        mapScenarioPath(scenarioId, path);
         return;
     }
+    // TODO: why isn't this working on the edit screen?
     window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Marker({
         map: window.state.map,
         title: name,
@@ -214,7 +208,26 @@ function mapScenario (scenarioId, scenario) {
     });
 }
 
+function mapScenarioPath(scenarioId, path) {
+    console.log("mapScenarioPath", scenarioId, path)
+    const pathMarker = window.state.mapFeatures.scenarioList[scenarioId].marker;
+    if (pathMarker) pathMarker.setMap(null);
+    if (!window.state.mapFeatures.scenarioList) {
+        window.state.mapFeatures.scenarioList = {[scenarioId]: {}};
+    }
+    window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Polyline({
+        path: path,
+        geodesic: true,
+        strokeColor: '#FF0000',
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+        map: window.state.map
+    });
+    return;
+}
+
 function mapHazardRanges(scenarioId, scenario) {
+    console.log("mapHazardRanges")
     const { name, latitude, longitude } = scenario;
     const colors =  ["#F0F", "#F00", "#00F"];
     for (let i = 0; i < NUMRANGES; i++) {
@@ -225,6 +238,7 @@ function mapHazardRanges(scenarioId, scenario) {
 
 function drawGoogleMapsCircle(latitude, longitude, radius, color) {
     //creates Google Maps radius for HazMat
+    console.log("drawGoogleMapsCircle")
     const myLatLng = new google.maps.LatLng(Number(latitude), Number(longitude));
     const circle = new google.maps.Circle({
         map: window.state.map,
@@ -273,14 +287,19 @@ function showScenarioPanel (scenarioId, EM) {
     if(window.state.mapFeatures.scenarioList[scenarioId]) { 
         window.state.mapFeatures.scenarioList[scenarioId].marker.setMap(null); 
     }
-
-    const dropdown = getElementById("tnoCurveSelect");
+    if (scenario.type === "pipeline") {
+        getElementById("point-or-path").options[1].selected = true;
+        console.log(scenario)
+        mapScenarioPath(scenarioId, scenario.path);
+        window.state.savedPath = scenario.path;
+    }
+    const tnoDropdown = getElementById("tnoCurveSelect");
     for (const optionText of Object.keys(window.state.tnoTable)) {
         const option = document.createElement("option");
         option.text = optionText;
-        dropdown.add(option);
+        tnoDropdown.add(option);
     }
-    dropdown.options[5].selected = true;
+    tnoDropdown.options[5].selected = true;
 
     getElementById("name").select();
     EM.emit("panel-created");

@@ -9,7 +9,6 @@ function setupModel(EM) {
     const state = {
         panel: "home",
         mapFeatures: {},
-        scenarioCount: 0,
         scenarioId: null,
         bubbleplotId: null,
         site: {
@@ -17,6 +16,7 @@ function setupModel(EM) {
             latitude: 36.15911,
             longitude: -95.99374,
             zoom: 18,
+            scenarioCount: 0,
         },
         tnoTable: {},
         savedLat: null,
@@ -39,6 +39,7 @@ function setupModel(EM) {
                 latitude,
                 longitude,
                 zoom: 18,
+                scenarioCount: 0,
                 bounds: new window.googleAPI.maps.LatLngBounds(
                     {lat: latitude - latDelta, lng: longitude - lngDelta},
                     {lat: latitude + latDelta, lng: longitude + lngDelta} )
@@ -57,8 +58,8 @@ function setupModel(EM) {
      */
     EM.on("create-edit-scenario", (scenarioId) => {
         if (!scenarioId) {
-            scenarioId = "scenario-" + state.scenarioCount;
-            state.scenarioCount +=  1;
+            scenarioId = "scenario-" + state.site.scenarioCount;
+            state.site.scenarioCount +=  1;
         }
         state.mapItem = scenarioId;
         try {
@@ -99,8 +100,8 @@ function setupModel(EM) {
 
     EM.on("create-bubbleplot", (bubbleplotId) => {
         if (!bubbleplotId) {
-            bubbleplotId = "bubbleplot-" + state.scenarioCount;
-            state.scenarioCount +=  1;
+            bubbleplotId = "bubbleplot-" + state.site.scenarioCount;
+            state.site.scenarioCount +=  1;
         }
         state.bubbleplotId = bubbleplotId;
         const rangelist = {};

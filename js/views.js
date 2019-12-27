@@ -288,7 +288,7 @@ function showScenarioPanel (scenarioId, EM) {
     function setNewOrGetScenario(site) {
         if (!scenarioId) {
             return {
-                name: "scenario-" + window.state.scenarioCount, 
+                name: "scenario-" + window.state.site.scenarioCount, 
                 latitude: site.latitude, 
                 longitude: site.longitude
             };

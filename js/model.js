@@ -572,8 +572,11 @@ function inCircle(xCoord, yCoord, xCenter, yCenter, radius) {
 function inCapsule(xCoord, yCoord, scenario, gridSize){
     const numPoints = scenario.points.length;
     for (let i = 0; i < numPoints; i++) {
+        // first check if the point is one of the bounding circles
+        const isInCircle = inCircle(xCoord, yCoord, scenario.points[i].gridX, scenario.points[i].gridY, scenario.radius);
+        if (isInCircle) return true;
         if (i === numPoints-1) {
-            return inCircle(xCoord, yCoord, scenario.points[i].gridX, scenario.points[i].gridY, scenario.radius);
+            return false;
         }
         const x1 = scenario.points[i].gridX;
         const y1 = scenario.points[i].gridY;
@@ -584,19 +587,18 @@ function inCapsule(xCoord, yCoord, scenario, gridSize){
         const maxy = Math.max(y1, y2);
         const miny = Math.min(y1, y2);
 
-        if (xCoord > maxx + scenario.radius) continue;
-        if (xCoord < minx - scenario.radius) continue;
-        if (yCoord > maxy + scenario.radius) continue;
-        if (yCoord < miny - scenario.radius) continue;
+        // below lines create a bounding box around the capsule
+        if (xCoord > maxx + Number(scenario.radius)) continue;
+        if (xCoord < minx - Number(scenario.radius)) continue;
+        if (yCoord > maxy + Number(scenario.radius)) continue;
+        if (yCoord < miny - Number(scenario.radius)) continue;
 
         if ( (xCoord > maxx || xCoord < minx)  && (yCoord > maxy || yCoord < miny) ) {
-            const point1 = inCircle(xCoord, yCoord, scenario.points[i].gridX, 
-                                    scenario.points[i].gridY, scenario.radius);
-            const point2 = inCircle(xCoord, yCoord, scenario.points[i+1].gridX, 
-                                    scenario.points[i+1].gridY, scenario.radius);
-            if (point1 || point2) return true;
+            // This shaves off the corners around the bounding circle
             continue;
         } 
+        // This formula determines the distance from a line defined by
+        // the two endpoints of the capsule.
         const distance = Math.abs( (y2 - y1) * xCoord - (x2 - x1) * yCoord +
                                     x2 * y1 - y2 * x1 ) /
                          Math.sqrt( (y2 - y1)**2 + (x2 - x1)**2 );  

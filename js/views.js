@@ -203,6 +203,10 @@ function mapScenario (scenarioId, scenario) {
     window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Marker({
         map: window.state.map,
         title: name,
+        label: {
+            color: 'white',
+            text: name
+        },
         position: myLatLng,
         icon: "assets/scenario.png"
     });

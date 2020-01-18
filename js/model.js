@@ -391,7 +391,7 @@ function makeCapsulePathSets(path, radius) {
         const rectanglePath = [];
         const nextPoint = path[i+1];
         const theta = Math.atan((nextPoint.lat - point.lat)/(nextPoint.lng - point.lng))*180/Math.PI;
-        if (!theta) continue;
+        console.log(theta)
         const R1 = getNewLatLong(nextPoint, (180 - theta), radius);
         const R2 = getNewLatLong(nextPoint, (360 - theta), radius);
         const R3 = getNewLatLong(point, (180 - theta), radius);

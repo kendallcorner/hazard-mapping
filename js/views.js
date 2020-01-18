@@ -167,7 +167,7 @@ function mapBubbleplots (bubbleplotList) {
                         paths: path,
                         strokeOpacity: 0,
                         strokeWeight: 0,
-                        fillColor: "#F00",
+                        fillColor: rangeColor.next().value,
                         fillOpacity: 0.35
                     });
                     window.state.mapFeatures.bubbleplotList[bubbleplotId].setMap(window.state.map);
@@ -230,13 +230,24 @@ function mapScenarioPath(scenarioId, path) {
     return;
 }
 
+function* rangeColorGen() {
+    let i = -1;
+    while (true) {
+        i++
+        const colors = ["#F0F", "#00F", "#0FF", "#0F0", "#FF0", "#F80","#F0F"];
+        if (i > colors.length) i = 0;
+        yield colors[i];
+    }
+}
+
+let rangeColor = rangeColorGen();
+
 function mapHazardRanges(scenarioId, scenario) {
     console.log("mapHazardRanges")
-    const { name, latitude, longitude } = scenario;
-    const colors =  ["#F0F", "#F00", "#00F"];
+    const { latitude, longitude } = scenario;
     for (let i = 0; i < NUMRANGES; i++) {
         window.state.mapFeatures.scenarioList[scenarioId]['range'+i] = drawGoogleMapsCircle(
-            latitude, longitude, scenario["range" + i].range, colors[i]);
+            latitude, longitude, scenario["range" + i].range, rangeColor.next().value);
     }
 }
 

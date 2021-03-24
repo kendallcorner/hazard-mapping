@@ -111,6 +111,7 @@ function returnHome(location) {
     window.state.map.panTo(myLatLng);
     window.state.map.setTilt(0);
     window.state.map.setZoom(location.zoom);
+    // window.state.map.fitBounds(window.state.site.bounds);
 }
 
 /*
@@ -124,18 +125,19 @@ function mapSiteMarker (location) {
     window.state.map.setZoom(18);
     createHandlebarsViewFromTemplate("title", "<h1>Site: {{name}} </h1>", location);
     if (window.state.mapFeatures.siteMarker) window.state.mapFeatures.siteMarker.setMap(null);
-    window.state.mapFeatures.siteMarker = new window.googleAPI.maps.Marker({
-        map: window.state.map,
-        title: location.name,
-        position: myLatLng,
-        icon: "assets/sitePin.png"
-    });
+    // window.state.mapFeatures.siteMarker = new window.googleAPI.maps.Marker({
+    //     map: window.state.map,
+    //     title: location.name,
+    //     position: myLatLng,
+    //     icon: "assets/sitePin.png"
+    // });
 }
 
 /*
  * Maps all scenario markers and hazard range circles
  */
 function mapAll (scenarioList) {
+    window.state.map.fitBounds(window.state.site.bounds);
     if (!window.state.mapFeatures) window.state.mapFeatures = {};
     if (!window.state.mapFeatures.scenarioList) window.state.mapFeatures.scenarioList = {};
 
@@ -158,44 +160,100 @@ function mapBubbleplots (bubbleplotList) {
     if (bubbleplotList && bubbleplotList != {}) {
         const bubbleplots = Object.entries(bubbleplotList);
         for (const [ bubbleplotId, bubbleplot ] of bubbleplots) {
-            const { hidden, name, path } = bubbleplot;
+            const { hidden, name, path, paths, frequencyThresholds } = bubbleplot;
             if (!hidden) {
-                const colors =  ["#F0F", "#F00", "#00F"];
-                window.state.mapFeatures.bubbleplotList[bubbleplotId] = new google.maps.Polygon({
-                    paths: path,
-                    strokeOpacity: 0,
-                    strokeWeight: 0,
-                    fillColor: "#F00",
-                    fillOpacity: 0.35
-                });
-                window.state.mapFeatures.bubbleplotList[bubbleplotId].setMap(window.state.map);
+                if (path) {
+                    window.state.mapFeatures.bubbleplotList[bubbleplotId] = new google.maps.Polygon({
+                        paths: path,
+                        strokeOpacity: 0,
+                        strokeWeight: 0,
+                        fillColor: rangeColor.next().value,
+                        fillOpacity: 0.35
+                    });
+                    window.state.mapFeatures.bubbleplotList[bubbleplotId].setMap(window.state.map);
+                }
+                if (paths) {
+                    const colors =  ["#F0F", "#00F", "#0FF", "#0F0", "#FF0", "#F80","#F0F"];
+                    for (let i = 0; i < paths.length; i++) {
+                        if (paths[i]) console.log("map: ", frequencyThresholds[i], paths[i])
+                        window.state.mapFeatures.bubbleplotList[bubbleplotId + i] = new google.maps.Polygon({
+                            paths: paths[i],
+                            strokeOpacity: 0,
+                            strokeWeight: 0,
+                            fillColor: colors[i],
+                            fillOpacity: 0.35
+                        });
+                        window.state.mapFeatures.bubbleplotList[bubbleplotId + i].setMap(window.state.map);
+                    }
+                }
             }
         }
     }
 }
 
 function mapScenario (scenarioId, scenario) {
-    const { name, latitude, longitude } = scenario;
+    const { name, latitude, longitude, type, path } = scenario;
     const myLatLng = new window.googleAPI.maps.LatLng(latitude, longitude);
     window.state.mapFeatures.scenarioList[scenarioId] = {};
+    if (type === "pipeline") {
+        mapScenarioPath(scenarioId, path);
+        return;
+    }
+    // TODO: why isn't this working on the edit screen?
     window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Marker({
         map: window.state.map,
         title: name,
+        label: {
+            color: 'white',
+            text: name
+        },
         position: myLatLng,
         icon: "assets/scenario.png"
     });
 }
 
+function mapScenarioPath(scenarioId, path) {
+    console.log("mapScenarioPath", scenarioId, path)
+    const pathMarker = window.state.mapFeatures.scenarioList[scenarioId].marker;
+    if (pathMarker) pathMarker.setMap(null);
+    if (!window.state.mapFeatures.scenarioList) {
+        window.state.mapFeatures.scenarioList = {[scenarioId]: {}};
+    }
+    window.state.mapFeatures.scenarioList[scenarioId].marker = new window.googleAPI.maps.Polyline({
+        path: path,
+        geodesic: true,
+        strokeColor: '#FF0000',
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+        map: window.state.map
+    });
+    return;
+}
+
+function* rangeColorGen() {
+    let i = -1;
+    while (true) {
+        i++
+        const colors = ["#F0F", "#00F", "#0FF", "#0F0", "#FF0", "#F80","#F0F"];
+        if (i > colors.length) i = 0;
+        yield colors[i];
+    }
+}
+
+let rangeColor = rangeColorGen();
+
 function mapHazardRanges(scenarioId, scenario) {
-    const { name, latitude, longitude } = scenario;
-    const colors =  ["#F0F", "#F00", "#00F"];
+    console.log("mapHazardRanges")
+    const { latitude, longitude } = scenario;
     for (let i = 0; i < NUMRANGES; i++) {
-        window.state.mapFeatures.scenarioList[scenarioId]['range'+i] = drawGoogleMapsCircle(latitude, longitude, scenario["range" + i], colors[i]);
+        window.state.mapFeatures.scenarioList[scenarioId]['range'+i] = drawGoogleMapsCircle(
+            latitude, longitude, scenario["range" + i].range, rangeColor.next().value);
     }
 }
 
 function drawGoogleMapsCircle(latitude, longitude, radius, color) {
     //creates Google Maps radius for HazMat
+    console.log("drawGoogleMapsCircle")
     const myLatLng = new google.maps.LatLng(Number(latitude), Number(longitude));
     const circle = new google.maps.Circle({
         map: window.state.map,
@@ -208,7 +266,6 @@ function drawGoogleMapsCircle(latitude, longitude, radius, color) {
     });
     return circle;
 }
-
 
 /*
  * Bring up site editor panel
@@ -238,19 +295,26 @@ function showScenarioPanel (scenarioId, EM) {
         window.state.mapFeatures.scenarioList = {};
     const site = window.state.site;
     const scenario = setNewOrGetScenario(site);
+    const model = setNewOrGetModel(scenario);
     createHandlebarsViewFromTemplateId("navigator", "scenario-panel", scenario);
-    createHandlebarsViewFromTemplateId("modalDiv", "model-modal", scenario);
+    createHandlebarsViewFromTemplateId("modalDiv", "model-modal", model);
     // remove from current scenario from map
     if(window.state.mapFeatures.scenarioList[scenarioId]) { 
         window.state.mapFeatures.scenarioList[scenarioId].marker.setMap(null); 
     }
-
-    const dropdown = getElementById("tnoCurveSelect");
+    if (scenario.type === "pipeline") {
+        getElementById("point-or-path").options[1].selected = true;
+        console.log(scenario)
+        mapScenarioPath(scenarioId, scenario.path);
+        window.state.savedPath = scenario.path;
+    }
+    const tnoDropdown = getElementById("tnoCurveSelect");
     for (const optionText of Object.keys(window.state.tnoTable)) {
         const option = document.createElement("option");
         option.text = optionText;
-        dropdown.add(option);
+        tnoDropdown.add(option);
     }
+    tnoDropdown.options[5].selected = true;
 
     getElementById("name").select();
     EM.emit("panel-created");
@@ -258,12 +322,26 @@ function showScenarioPanel (scenarioId, EM) {
     function setNewOrGetScenario(site) {
         if (!scenarioId) {
             return {
-                name: "scenario-" + window.state.scenarioCount, 
+                name: "scenario-" + window.state.site.scenarioCount, 
                 latitude: site.latitude, 
                 longitude: site.longitude
             };
         } else { 
             return site.scenarioList[scenarioId];
+        }
+    }
+
+    function setNewOrGetModel(scenario) {
+        if (!scenario.model) {
+            return {
+                metricEnglish: "metric",
+                tnoVolume: "1000",
+                tnoHeat: "3500",
+                tnoAtmPress: "1013.25",
+                tnoPressThresh: ["500", "100", "50"]
+            };
+        } else { 
+            return scenario.model;
         }
     }
 }

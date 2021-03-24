@@ -16,7 +16,6 @@ function initController(EM) {
     loadButton.addEventListener('change', ()=> {
         //loads existing JSON file as a location.
         const fileURL = window.URL.createObjectURL(loadButton.files[0]);
-        console.log(fileURL);
         //https://stackoverflow.com/questions/35294633/what-is-the-vanilla-js-version-of-jquerys-getjson#answers
         const request = new XMLHttpRequest();
         request.open('GET', fileURL, true);
@@ -24,6 +23,9 @@ function initController(EM) {
             if (request.status >= 200 && request.status < 400) {
                 const json = JSON.parse(request.responseText);
                 window.state.site = json;
+                window.state.site.bounds = new window.googleAPI.maps.LatLngBounds(
+                    {lat: window.state.site.bounds.south, lng: window.state.site.bounds.west},
+                    {lat: window.state.site.bounds.north, lng: window.state.site.bounds.east});
                 window.state.panel = "site-content";
                 EM.emit("change-panel");
             } else {
@@ -51,6 +53,10 @@ function initController(EM) {
         } else {
             throw new Error("No panel of the name ", panel);
         }
+    });
+
+    EM.on("model-stored", () => { 
+        updateRadiiFromModel("tnoModel", window.state.currentModel);
     });
 }
 
@@ -193,6 +199,26 @@ function runDropdownMenu(event, EM) {
  * Set up Scenario Editor listeners
  */
 function listenToBubbleplotEditor(EM) {
+    document.addEventListener('input', function (event) {
+        if (event.target.id !== 'bubbleplot-type') return;
+        setBubbleplotCheckboxes(getElementById("bubbleplot-type"));
+    }, false);
+
+    function setBubbleplotCheckboxes(dropdown) {
+        const scenarioBoxes = document.getElementsByClassName("scenario");
+        const rangeBoxes = document.getElementsByClassName("range");
+        if (dropdown.value == "union" || dropdown.value == "f-input") {
+            for (const box of scenarioBoxes) { box.disabled = true; box.checked = false; }
+            for (const box of rangeBoxes) { box.disabled = false; }
+            getElementById("min-threshold").disabled =  true;
+        } else if (dropdown.value == "f-model") {
+            for (const box of rangeBoxes) { box.disabled = true; box.checked = false; }
+            for (const box of scenarioBoxes) { box.disabled = false; }
+            getElementById("min-threshold").disabled =  false;
+        } else {
+            throw new Error("not a valid dropdown value");
+        }
+    }
     getElementById("submit-button").addEventListener("click", () => {
         EM.emit("create-bubbleplot");
     });
@@ -206,11 +232,16 @@ function listenToBubbleplotEditor(EM) {
  */
 function listenToScenarioEditor(EM) {
     const state = window.state;
-    const eventListeners = placeLatLongListenerOnMap();
+    let eventListeners = placeLatLongListenerOnMap();
     getElementById("submit-button").addEventListener("click", () => {
         EM.emit("create-edit-scenario", state.mapItem);
         removeLatLongListenerFromMap(eventListeners);
         if (state.searchMarker) state.searchMarker.setMap(null);
+        if (state.tempPath) {
+            for (const segment of state.tempPath) {
+                try { segment.setMap(null); } catch (e) {}
+            }
+        }
     });
     getElementById("scenario-cancel-button").addEventListener("click", () => {
         state.panel = "site-content";
@@ -222,89 +253,41 @@ function listenToScenarioEditor(EM) {
         window.alert("This feature has not been created yet");
     });
     getElementById("save-model").addEventListener("click", () => {
-        getModelData("tnoModel");
+        EM.emit("get-model-info");
     });
+    document.addEventListener('input', function (event) {
+        if (event.target.id !== 'point-or-path') return;
+        removeLatLongListenerFromMap(eventListeners);
+        if (window.state.searchMarker) window.state.searchMarker.setMap(null);
+        const path = getElementById("point-or-path").value === "pipeline";
+        eventListeners = placeLatLongListenerOnMap(path);
+    }, false);
     // Make initial scenario marker
     if (state.mapItem) {
         placeDraggableMarkerOnMap(state.site.scenarioList[state.mapItem].latitude, 
             state.site.scenarioList[state.mapItem].longitude);
+        window.state.savedLat = state.site.scenarioList[state.mapItem].latitude;
+        window.state.savedLng = state.site.scenarioList[state.mapItem].longitude;
     } else {
         placeDraggableMarkerOnMap(state.site.latitude, state.site.longitude);
+        window.state.savedLat = state.site.latitude;
+        window.state.savedLng = state.site.longitude;
     }
     addKeyboardFunctionality();
 }
 
-function getModelData(modelName) {
+function updateRadiiFromModel (modelName, model) {
     if (modelName == "tnoModel") {
-        const model = {};
-        model.metricEnglish = getElementById("metric-english-toggle").getAttribute("data");
-        model.tnoVolume = getElementById("tnoVolume").value;
-        model.tnoHeat = getElementById("tnoHeat").value;
-        model.tnoAtmPress = getElementById("tnoAtmPress").value;
-        model.tnoCurveSelect = getElementById("tnoCurveSelect").value;
-        model.tnoPressThresh = [
-            getElementById("tnoPressThresh1").value, 
-            getElementById("tnoPressThresh2").value, 
-            getElementById("tnoPressThresh3").value
-        ];
-
-        model.tnoPressThresh.sort((a, b) => {return b-a;});
-
-        // TODO: store model in state
-
-        const radiusForPs = TNOmodelFromPressArray(model);
-
-        getElementById("range-0").value = radiusForPs[0];
-        getElementById("range-1").value = radiusForPs[1];
-        getElementById("range-2").value = radiusForPs[2];
-    }
-}
-
-function TNOmodelFromPressArray(model) {
-    let distances = [];
-    for (const p of model.tnoPressThresh) {
-        const scaledP = (p/model.tnoAtmPress);
-        console.log("scaledP = " + scaledP);
-        const curve = window.state.tnoTable[model.tnoCurveSelect];
-        const rbar = tableLookup(curve, scaledP);
-        console.log("rbar = " + rbar);
-        if (rbar) {
-            distances.push(rbar*(model.tnoHeat*1000*model.tnoVolume/(model.tnoAtmPress*100))**(1/3));
+        const radiusForPs = model.TNOmodelFromPressArray(model.tnoPressThresh);
+        if (!radiusForPs[0] || !radiusForPs[1] || !radiusForPs[2]) {
+            window.alert("Not all thresholds can be reached by the chosen curve");
         }
-        
-    }
-    console.log(distances);
-    return distances;
-}
-
-function tableLookup(table, scaledPressure) {
-    if (scaledPressure > table.overpressure[0]) {
-        window.alert("Not all thresholds can be reached by the chosen curve");
-        return false;
-    } else {
-        for (let i=0; i < table.overpressure.length; i++) {
-            if (scaledPressure > table.overpressure[i]) {
-                let interp = logInterpolateX (
-                    table.distance[i], 
-                    table.overpressure[i], 
-                    table.distance[i-1], 
-                    table.overpressure[i-1], 
-                    scaledPressure);
-                console.log(interp);
-                return interp;
-            }
-        }
+        for (let i=0; i < radiusForPs.length; i++) if (!radiusForPs[i]) radiusForPs[i] = 0;
+        getElementById("range-0").value = radiusForPs[0].toFixed(1);
+        getElementById("range-1").value = radiusForPs[1].toFixed(1);
+        getElementById("range-2").value = radiusForPs[2].toFixed(1);
     }
 }
-
-function interpolate(x1, y1, x2, y2, x) { return y1+(y2-y1)*(x-x1)/(x2-x1); }
-function logInterpolateX(x1, y1, x2, y2, y) { 
-    // https://math.stackexchange.com/questions/1777303/interpolation-point-fitting-onto-a-logarithmic-line-segment
-    // https://en.wikipedia.org/wiki/Log%E2%80%93log_plot
-    const slope = Math.log(y2/y1)/Math.log(x2/x1);
-    return x1*(y/y1)**(1/slope); 
-}
-
 
 /*
  * Set up Site Content panel listeners
@@ -366,14 +349,25 @@ function saveSite(location) {
     }
 }
 
-function placeLatLongListenerOnMap() {
+function placeLatLongListenerOnMap(path) {
+    if (path){
+        return [ 
+            window.googleAPI.maps.event.addListener(
+                window.state.map, "click", event => { 
+                    latLongListener(event, path); 
+            })
+        ];
+    }
     return [
-        window.googleAPI.maps.event.addListener(window.state.map, "click", latLongListener),
-        window.googleAPI.maps.event.addListener(window.state.map, "click", (event) => {
-            placeDraggableMarkerOnMap(event.latLng.lat(), event.latLng.lng());
-        })
+        window.googleAPI.maps.event.addListener(
+            window.state.map, "click", event => { 
+                latLongListener(event, path); 
+            }),
+        window.googleAPI.maps.event.addListener(
+            window.state.map, "click", (event) => {
+                placeDraggableMarkerOnMap(event.latLng.lat(), event.latLng.lng());
+            })
     ];
-
 }
 
 function removeLatLongListenerFromMap(eventListeners) {
@@ -382,13 +376,44 @@ function removeLatLongListenerFromMap(eventListeners) {
     }
 }
 
-function latLongListener(event) {
-    setLatLongValues(event.latLng.lat(), event.latLng.lng());
+function latLongListener(event, path) {
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    if (window.state.panel === "site-editor") {
+        setLatLongValues(lat, lng);
+        return;
+    }
+    if (window.state.panel === "scenario-editor") {
+        if (path) {
+            window.state.savedPath.push({lat, lng});
+            drawPath(lat, lng);
+            return;
+        }
+        window.state.savedLat = lat;
+        window.state.savedLng = lng;
+        return;
+    }
 }
 
 function setLatLongValues(latitude, longitude) {
     getElementById("latitude").value = latitude.toFixed(5);
     getElementById("longitude").value = longitude.toFixed(5);
+}
+
+function drawPath(lat,lng) {
+    if (window.state.savedPath.length === 1) {
+        // TODO: mark starting point
+        return;
+    }
+    const pathSegment = new google.maps.Polyline({
+        path: window.state.savedPath,
+        geodesic: true,
+        strokeColor: '#FF0000',
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+    });
+    pathSegment.setMap(window.state.map);
+    window.state.tempPath.push(pathSegment);
 }
 
 function placeDraggableMarkerOnMap(latitude, longitude){

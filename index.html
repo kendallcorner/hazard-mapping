@@ -157,10 +157,13 @@
             <input type="text" id="material" value="{{material}}" >
           </label>
           <div class="form latlong-group">
-            <select id="point-or-path">
-              <option value="equipment">Equipment (one point)</option>
-              <option value="pipeline">pipeline (path)</option>
-            </select>
+            <label>Latitude*: 
+              <input type="text" id="latitude" value="{{latitude}}">
+            </label>
+
+            <label>Longitude*: 
+              <input type="text" id="longitude" value="{{longitude}}">
+            </label>
           </div>
         </div>
         <button class="btn btn-primary btn-long" type="button" data-toggle="modal" data-target="#modelModal">Model Scenario</button>
@@ -168,31 +171,31 @@
         <div class="form range-inputs">
           <div class="form range group">
             <label>Consequence 1 Range (m): 
-              <input type="text" id="range-0" value="{{range0.range}}">
+              <input type="text" id="range-0" value="{{range0}}">
             </label>
 
             <label>Frequency for Range 1: 
-              <input type="text" id="frange-0" value="{{range0.frequency}}">
+              <input type="text" id="frange-0" value="{{frequency0}}">
             </label>
           </div>
           
           <div class="form range group">
             <label>Consequence 2 Range (m): 
-              <input type="text" id="range-1" value="{{range1.range}}">
+              <input type="text" id="range-1" value="{{range1}}">
             </label>
 
             <label>Frequency for Range 2: 
-              <input type="text" id="frange-1" value="{{range1.frequency}}">
+              <input type="text" id="frange-1" value="{{frequency1}}">
             </label>
           </div>
           
           <div class="form range group">
             <label>Consequence 3 Range (m): 
-              <input type="text" id="range-2" value="{{range2.range}}">
+              <input type="text" id="range-2" value="{{range2}}">
             </label>
 
             <label>Frequency for Range 3: 
-              <input type="text" id="frange-2" value="{{range2.frequency}}">
+              <input type="text" id="frange-2" value="{{frequency2}}">
             </label>
           </div>
         </div>
@@ -210,27 +213,21 @@
             <label>Bubbleplot Name*: 
               <input type="text" id="name" value="{{name}}">
             </label>
-            <select id="bubbleplot-type">
-              <option value="union">Union Only</option>
-              <option value="f-input">frequency input based</option>
-              <option value="f-model">frequency modeling based</option>
-            </select>
             {{#each scenarioList}}
-              <div class="scenario form"><input type="checkbox" class="scenario" name="{{this.name}}" id="{{this.scenarioId}}" disabled>{{this.name}}
+              <div class="scenario form" id="{{this.scenarioId}}">{{this.name}}
                 <ul>
                   <li class="range form">
-                    <input type="checkbox" class="range" name="{{this.name}}-range0" id="{{this.scenarioId}}-range0">Range 0 ({{this.range0.range}})
+                    <input type="checkbox" name="{{this.name}}-range0" id="{{this.scenarioId}}-range0">Range 0 ({{this.range0}})
                   </li>
                   <li class="range form">
-                    <input type="checkbox" class="range" name="{{this.name}}-range1" id="{{this.scenarioId}}-range1">Range 1 ({{this.range1.range}})
+                    <input type="checkbox" name="{{this.name}}-range1" id="{{this.scenarioId}}-range1">Range 1 ({{this.range1}})
                   </li>
                   <li class="range form">
-                    <input type="checkbox" class="range" name="{{this.name}}-range2" id="{{this.scenarioId}}-range2">Range 2 ({{this.range2.range}})
+                    <input type="checkbox" name="{{this.name}}-range2" id="{{this.scenarioId}}-range2">Range 2 ({{this.range2}})
                   </li>
                 </ul>
               </div>
             {{/each}}
-            <label>Minimum Threshold: <input type="text" id="min-threshold" disabled></label>
           </div>
           <div class="btn-group" role="group" aria-label="">
             <button id="submit-button" data-scenario-id="{{scenarioID}}" class="btn btn-primary" type="button">submit</button>
@@ -251,26 +248,26 @@
               <div class="modal-body">
                 <div class="container-fluid">
                   <div class="row">
-                    <button class="btn btn-primary btn-long" id="metric-english-toggle" data="{{metricEnglish}}">Metric: Click for English</button>
+                    <button class="btn btn-primary btn-long" id="metric-english-toggle" data="metric">Metric: Click for English</button>
                   </div>
                   <div class="row">
                     <div class="col-md-6">
                       <label class="TNOform">Volume of Congested Area (<span id="tnoVolumeUnit">m^3</span>)</label>
                     </div>
                     <div class="col-md-6">
-                      <input class="TNOform" type="text" id="tnoVolume" value="{{tnoVolume}}">
+                      <input class="TNOform" type="text" id="tnoVolume" value="1000">
                     </div>
                     <div class="col-md-6">
                       <label class="TNOform">Heat of Combustion (<span id="tnoHocUnit">kJ/m^3</span>)</label>
                     </div>
                     <div class="col-md-6">
-                      <input class="TNOform" type="text" id="tnoHeat" value="{{tnoHeat}}">
+                      <input class="TNOform" type="text" id="tnoHeat" value="3500">
                     </div>
                     <div class="col-md-6">
                       <label class="TNOform">Atmospheric Pressure (<span class="tnoPressureUnit">mbar</span>)</label>
                     </div>
                     <div class="col-md-6">
-                      <input class="TNOform" type="text" id="tnoAtmPress" value="{{tnoAtmPress}}">
+                      <input class="TNOform" type="text" id="tnoAtmPress" value="1013.25">
                     </div>
                     <div class="col-md-6">
                       <select id="tnoCurveSelect">
@@ -281,9 +278,9 @@
                     <label class="TNOform">Overpressure Thresholds (<span class="tnoPressureUnit">mbar</span>)</label>
                   </div>
                   <div class="row">
-                    <input class="TNOform" type="text" id="tnoPressThresh1" value="{{tnoPressThresh.[0]}}">
-                    <input class="TNOform" type="text" id="tnoPressThresh2" value="{{tnoPressThresh.[1]}}">
-                    <input class="TNOform" type="text" id="tnoPressThresh3" value="{{tnoPressThresh.[2]}}">
+                    <input class="TNOform" type="text" id="tnoPressThresh1" value="50">
+                    <input class="TNOform" type="text" id="tnoPressThresh2" value="100">
+                    <input class="TNOform" type="text" id="tnoPressThresh3" value="500">
                   </div>
                   <div class="row">
                      <a href="https://processsafetyrelief.com/2019/11/22/TNO-model/" target="_blank">More information on TNO explosion curves and use of the model.</a>

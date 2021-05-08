@@ -5,7 +5,7 @@
   "main": "index.html",
   "dependencies": {
     "EventEmitter": "^1.0.0",
-    "handlebars": "^4.5.3"
+    "handlebars": "^4.7.7"
   },
   "devDependencies": {
     "browserify": "^16.5.0",
